@@ -1,7 +1,7 @@
 class Generator:
     def __init__(self, model_params) -> None:
         self.model_params = model_params
-        self.model_path = self.model_params['model_path']
+        self.model_path = self.model_params["model_path"]
         self.generator = self.get_model()
 
     def get_model(self):

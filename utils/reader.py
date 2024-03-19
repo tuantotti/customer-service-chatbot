@@ -1,6 +1,8 @@
 from typing import AnyStr, Dict
-from utils.logger import Logger
+
 import pandas as pd
+
+from utils.logger import Logger
 
 logger = Logger.get_logger()
 
@@ -16,5 +18,5 @@ def read_dataset(input_dir: AnyStr) -> Dict:
     except Exception as e:
         logger.error(e)
         dataset = None
-    
+
     return dataset

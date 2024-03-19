@@ -1,11 +1,14 @@
-import click
-from utils.logger import Logger
-from chatbot.chat import CustomerServiceChatbot
-import pandas as pd
-from utils.reader import read_dataset
 import datetime
 
+import click
+
+from chatbot.chat import CustomerServiceChatbot
+from utils.logger import Logger
+from utils.reader import read_dataset
+
 logger = Logger.get_logger()
+
+
 @click.command()
 @click.option("--input_dir", "-i", default="datasets/input.csv", help="Input file path")
 @click.option(
@@ -25,19 +28,24 @@ def run(
         invalid_list = []
         for i in range(len(dataset)):
             try:
-                question, context = dataset.loc[i, "question"], dataset.loc[i, "context"]
+                question, context = (
+                    dataset.loc[i, "question"],
+                    dataset.loc[i, "context"],
+                )
                 response = chatbot.invoke({"context": context, "question": question})
-                dataset.loc[i, 'response'] = response.strip()
+                dataset.loc[i, "response"] = response.strip()
             except Exception as e:
-                dataset.loc[i, 'response'] = ""
+                dataset.loc[i, "response"] = ""
                 invalid_list.append(i)
                 logger.error(e)
 
         now = datetime.datetime.now()
-        file_name = f"{now.strftime("%Y-%m-%d_%H:%M%")}.csv"
+        current_time_ft = now.strftime("%Y-%m-%d %H:%M")
+        file_name = f"{current_time_ft}.csv"
         output_path = f"{output_dir}/{file_name}"
         dataset.to_csv(output_path, index=False)
         logger.info(f"Save llm'response in {output_path}")
+
 
 if __name__ == "__main__":
     run()

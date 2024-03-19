@@ -19,5 +19,5 @@ class PredefinedPrompt:
     def format_prompt(self):
         template = f"""{self.pre_prompt_prefix}\n{self.pre_prompt}\n{self.pre_prompt_suffix}\n\n{self.input} {self.input_suffix}"""
         prompt_template = ChatPromptTemplate.from_template(template=template)
-        
+
         return prompt_template
