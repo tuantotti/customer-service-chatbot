@@ -15,13 +15,14 @@ class CustomerServiceChatbot:
 
     def init_chain(self):
         chat_template = PredefinedPrompt()
-        embedding_model = EmbeddingModel()
-        retriever = Retriever(embedding_model=embedding_model)
         generator = Generator(model_params=llm_config["model_params"])
+        llm = generator.model
         if self.use_retriever:
-            chain = chat_template.review_prompt_template | retriever
+            embedding_model = EmbeddingModel()
+            retriever = Retriever(embedding_model=embedding_model)
+            chain = chat_template.prompt_template | retriever
         else:
-            chain = chat_template.review_prompt_template | generator | StrOutputParser()
+            chain = chat_template.prompt_template | llm | StrOutputParser()
 
         return chain
 

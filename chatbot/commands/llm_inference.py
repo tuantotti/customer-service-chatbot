@@ -5,6 +5,7 @@ import click
 from chatbot.chat import CustomerServiceChatbot
 from utils.logger import Logger
 from utils.reader import read_dataset
+from tqdm import tqdm
 
 logger = Logger.get_logger()
 
@@ -24,9 +25,10 @@ def run(
     chatbot = CustomerServiceChatbot(use_retriever=False)
     dataset = read_dataset(input_dir=input_dir)
 
-    if dataset:
+    if dataset is not None:
+        print(dataset)
         invalid_list = []
-        for i in range(len(dataset)):
+        for i in tqdm(range(len(dataset))):
             try:
                 question, context = (
                     dataset.loc[i, "question"],
@@ -42,7 +44,8 @@ def run(
         now = datetime.datetime.now()
         current_time_ft = now.strftime("%Y-%m-%d %H:%M")
         file_name = f"{current_time_ft}.csv"
-        output_path = f"{output_dir}/{file_name}"
+        output_path = f"{output_dir}{file_name}"
+        print(output_path)
         dataset.to_csv(output_path, index=False)
         logger.info(f"Save llm'response in {output_path}")
 
