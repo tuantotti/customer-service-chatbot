@@ -1,4 +1,5 @@
 from langchain_community.embeddings import HuggingFaceEmbeddings
+
 from configs.config import embedding_config
 
 

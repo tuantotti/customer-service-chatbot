@@ -1,7 +1,17 @@
 model:
-  model_path: output/llm/ggml-vistral-7B-chat-q4_0.gguf
-  n_gpu_layers: -1
-  n_batch: 512
-  n_ctx: 2048
-  f16_kv: True
-  verbose: True
+  model_params:
+    model_path: output/llm/ggml-vistral-7B-chat-q4_0.gguf
+    n_gpu_layers: -1
+    n_batch: 512
+    n_ctx: 2048
+    f16_kv: True
+    verbose: True
+    
+  inference_params: 
+    input_prefix: "<s>[INST]"
+    input_suffix: "[/INST]"
+    input: "Công việc của bạn là tư vấn sản phẩm cho người sử dụng.\nHãy trả lời CÂU HỎI dựa trên NGỮ CẢNH càng chi tiết càng tốt và ngôn ngữ trang trọng, đồng thời đừng bịa đặt bất kỳ thông tin nào đó không phải từ NGỮ CẢNH.\nNếu bạn không biết câu trả lời, hãy nói tôi không biết.\n\nNGỮ CẢNH: {context}\nCÂU HỎI: {question}"
+    pre_prompt: "Bạn là một trợ lí Tiếng Việt nhiệt tình và trung thực. Hãy luôn trả lời một cách hữu ích nhất có thể, đồng thời giữ an toàn.\nCâu trả lời của bạn không nên chứa bất kỳ nội dung gây hại, phân biệt chủng tộc, phân biệt giới tính, độc hại, nguy hiểm hoặc bất hợp pháp nào. Hãy đảm bảo rằng các câu trả lời của bạn không có thiên kiến xã hội và mang tính tích cực. Nếu một câu hỏi không có ý nghĩa hoặc không hợp lý về mặt thông tin, hãy giải thích tại sao thay vì trả lời một điều gì đó không chính xác. Nếu bạn không biết câu trả lời cho một câu hỏi, hãy trả lời là bạn không biết và vui lòng không chia sẻ thông tin sai lệch."
+    pre_prompt_prefix: "<s>[INST]  <<SYS>>"
+    pre_prompt_suffix: "<</SYS>>"
+    

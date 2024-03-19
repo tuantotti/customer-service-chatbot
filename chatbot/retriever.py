@@ -1,6 +1,8 @@
-from langchain_community.vectorstores import Milvus
-from configs.config import milvus_config
 from typing import List
+
+from langchain_community.vectorstores import Milvus
+
+from configs.config import milvus_config
 
 
 class Retriever:

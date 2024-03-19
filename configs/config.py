@@ -1,9 +1,5 @@
-from pydantic import MongoDsn
 from pydantic_settings import BaseSettings
-from typing import Dict
 import yaml
-from utils.load_config import load_file
-
 
 class Settings(BaseSettings):
     MONGO_URI: str = "mongodb://localhost:27017"
@@ -16,31 +12,31 @@ class Settings(BaseSettings):
 
 class LlmConfig:
     def __init__(self) -> None:
-        _config = load_file("configs/llm_config.yaml")
+        _config = yaml.safe_load(open("configs/llm_config.yaml", "r"))
         self.model_params = _config["model"]
 
 
 class MilvusConfig:
     def __init__(self) -> None:
-        _config = load_file("configs/database.yaml")
+        _config = yaml.safe_load(open("configs/database.yaml", "r"))
         self.milvus_params = _config["milvus"]
 
 
 class EmbeddingConfig:
     def __init__(self) -> None:
-        _config = load_file("configs/embedding_config.yaml")
+        _config = yaml.safe_load(open("configs/embedding_config.yaml", "r"))
         self.params = _config["model"]
 
 
 class RetrieverConfig:
     def __init__(self) -> None:
-        _config = load_file("configs/database.yaml")
+        _config = yaml.safe_load(open("configs/database.yaml", "r"))
         self.milvus_params = _config["milvus"]
         self.collection_params = self.milvus_params["collection"]
 
 
-embedding_config = EmbeddingConfig()
-llm_config = LlmConfig()
+embedding_config = EmbeddingConfig().params
+llm_config = LlmConfig().model_params
 settings = Settings()
-milvus_config = MilvusConfig()
+milvus_config = MilvusConfig().milvus_params
 retrieve_config = RetrieverConfig().collection_params
