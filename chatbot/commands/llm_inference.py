@@ -26,7 +26,6 @@ def run(
     dataset = read_dataset(input_dir=input_dir)
 
     if dataset is not None:
-        print(dataset)
         invalid_list = []
         for i in tqdm(range(len(dataset))):
             try:
