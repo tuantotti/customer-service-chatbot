@@ -4,8 +4,8 @@ from utils.logger import Logger
 class TestChatbot:
     def test_inference(self):
         logger = Logger.get_logger()
-        question = "Bạn là ai, bạn tên là gì, do công ty nào tạo ra hoặc phát triển?"
+        question = "Có thể chuyển tiền từ Mobile Money của nhà mạng này sang nhà mạng khác cung cấp được không?"
         chatbot = CustomerServiceChatbot(use_retriever=True)
-        response = chatbot.invoke({"question": question})
+        response = chatbot.chain.invoke({"question": question})
         logger.info(response)
         

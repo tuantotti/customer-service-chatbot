@@ -14,16 +14,13 @@ class VectorStore:
         )
         self.vector_db = Milvus(
             embedding_function=embedding_model,
-            connection_args=milvus_config,
-            collection_name="Question_Embedding",
-            vector_field="question_embedding",
-            primary_field="id",
-            text_field="question_id",
+            connection_args=milvus_config.connection_args,
+            **milvus_config.collection_args
         )
 
     def get_retriever(self):
         return self.vector_db.as_retriever(
-            search_type="similarity", search_kwargs={"metric_type": "COSINE", "k": 6}
+            search_type="similarity", search_kwargs={"metric_type": "COSINE", "k": 2}
         )
 
     def similarity_search(self, query, limit) -> List:

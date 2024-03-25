@@ -1,9 +1,10 @@
 milvus:
-  uri: https://in03-7f0182a96e77a1f.api.gcp-us-west1.zillizcloud.com
-  user: db_7f0182a96e77a1f
-  password: Op7]E[[hBZf9t9uB
-  collection:
-    collection_name: Question_Embedding
-    vector_field: question_embedding
+  connection_args:
+    uri: https://in03-7f0182a96e77a1f.api.gcp-us-west1.zillizcloud.com
+    user: db_7f0182a96e77a1f
+    password: Op7]E[[hBZf9t9uB
+  collection_args:
+    collection_name: Test_Question_Embedding
+    vector_field: vector
     primary_field: id
-    text_field: question_id
+    text_field: raw_text

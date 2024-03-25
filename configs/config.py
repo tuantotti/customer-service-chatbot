@@ -20,7 +20,9 @@ class LlmConfig:
 class MilvusConfig:
     def __init__(self) -> None:
         _config = yaml.safe_load(open("configs/database.yaml", "r"))
-        self.milvus_params = _config["milvus"]
+        milvus_params = _config["milvus"]
+        self.connection_args = milvus_params["connection_args"]
+        self.collection_args = milvus_params["collection_args"]
 
 
 class EmbeddingConfig:
@@ -29,15 +31,7 @@ class EmbeddingConfig:
         self.params = _config["model"]
 
 
-class RetrieverConfig:
-    def __init__(self) -> None:
-        _config = yaml.safe_load(open("configs/database.yaml", "r"))
-        self.milvus_params = _config["milvus"]
-        self.collection_params = self.milvus_params["collection"]
-
-
 embedding_config = EmbeddingConfig().params
 llm_config = LlmConfig().model_params
 settings = Settings()
-milvus_config = MilvusConfig().milvus_params
-retrieve_config = RetrieverConfig().collection_params
+milvus_config = MilvusConfig()
