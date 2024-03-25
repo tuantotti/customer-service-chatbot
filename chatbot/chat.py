@@ -10,7 +10,9 @@ from chatbot.generator import Generator
 from chatbot.prompts import PredefinedPrompt
 from chatbot.retriever import VectorStore
 from configs.config import llm_config
-from rest_api.schemas.items import QueryItem
+from rest_api.schemas.items import QueryItem, QuestionItem
+
+from typing import Union
 
 
 class CustomerServiceChatbot:
@@ -43,10 +45,16 @@ class CustomerServiceChatbot:
 
         return chain
 
-    def invoke(self, query: QueryItem):
+    def invoke(self, query: Union[QueryItem, QuestionItem]):
         answer = None
-        if query.context:
-            answer = self.chain.invoke(query.dict())
+        answer = self.chain.invoke(query.dict())
+
+        if not self.use_retriever:
+            answer = {"answer": answer}
+        
+        if self.memory:
+            self.memory.save_context(query.dict(), {"answer": answer["answer"]})
+            
         return answer
 
     def init_memory(self):

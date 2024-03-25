@@ -31,9 +31,9 @@ def run(
             try:
                 question = dataset.loc[i, "question"]
                 response = chatbot.invoke({"question": question})
-                dataset.loc[i, "response"] = response["answer"].strip()
+                dataset.loc[i, "answer"] = response["answer"].strip()
             except Exception as e:
-                dataset.loc[i, "response"] = ""
+                dataset.loc[i, "answer"] = ""
                 invalid_list.append(i)
                 logger.error(e)
 
@@ -41,7 +41,6 @@ def run(
         current_time_ft = now.strftime("%Y-%m-%d %H:%M")
         file_name = f"chatbot_{current_time_ft}.csv"
         output_path = f"{output_dir}{file_name}"
-        print(output_path)
         dataset.to_csv(output_path, index=False)
         logger.info(f"Save chatbot'response in {output_path}")
 

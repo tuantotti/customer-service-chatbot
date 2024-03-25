@@ -6,6 +6,7 @@ from tqdm import tqdm
 from chatbot.chat import CustomerServiceChatbot
 from utils.logger import Logger
 from utils.reader import read_dataset
+from rest_api.schemas.items import QueryItem
 
 logger = Logger.get_logger()
 
@@ -33,7 +34,8 @@ def run(
                     dataset.loc[i, "question"],
                     dataset.loc[i, "context"],
                 )
-                response = chatbot.invoke({"context": context, "question": question})
+                query = QueryItem(question, context)
+                response = chatbot.invoke(query=query)
                 dataset.loc[i, "response"] = response.strip()
             except Exception as e:
                 dataset.loc[i, "response"] = ""
@@ -44,7 +46,6 @@ def run(
         current_time_ft = now.strftime("%Y-%m-%d %H:%M")
         file_name = f"llm_{current_time_ft}.csv"
         output_path = f"{output_dir}{file_name}"
-        print(output_path)
         dataset.to_csv(output_path, index=False)
         logger.info(f"Save llm'response in {output_path}")
 
