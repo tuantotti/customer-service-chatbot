@@ -62,7 +62,7 @@ class CustomerServiceChatbot:
         )
 
         return self.answer_chain
-    
+
     def get_conversional_chain(self):
         loaded_memory = RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
@@ -74,16 +74,16 @@ class CustomerServiceChatbot:
         self.retriever = vector_store.get_retriever()
 
         standalone_question = {
-                "standalone_question": {
-                    "question": lambda x: x["question"],
-                    "chat_history": lambda x: get_buffer_string(x["chat_history"]),
-                }
-                | self.CONDENSE_QUESTION_PROMPT
-                | self.llm,
+            "standalone_question": {
+                "question": lambda x: x["question"],
+                "chat_history": lambda x: get_buffer_string(x["chat_history"]),
             }
+            | self.CONDENSE_QUESTION_PROMPT
+            | self.llm,
+        }
 
         retrieved_documents = {
-            "docs": itemgetter("standalone_question") | self.retriever,
+            "docs": itemgetter("standalone_question") | self.retriever | vector_store._combine_documents,
             "question": lambda x: x["standalone_question"],
         }
 
@@ -101,5 +101,3 @@ class CustomerServiceChatbot:
         chain = loaded_memory | standalone_question | retrieved_documents | answer
 
         return chain
-
-

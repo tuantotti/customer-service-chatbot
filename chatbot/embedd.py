@@ -10,7 +10,7 @@ class EmbeddingModel:
         self.model = self.get_embedding_model(embedding_config)
 
     def get_embedding_model(self, params):
-        embed_model = HuggingFaceEmbeddings(kwargs=params)
+        embed_model = HuggingFaceEmbeddings(**params)
 
         return embed_model
 

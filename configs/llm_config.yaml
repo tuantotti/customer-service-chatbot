@@ -42,9 +42,9 @@ model:
       Bây giờ, với những ví dụ đó, đây là lịch sử trò chuyện thực tế và câu hỏi đầu vào.
 
       Lịch sử trò chuyện:
-      {lịch sử trò chuyện}
+      {chat_history}
 
-      Đầu vào tiếp theo: {câu hỏi}
+      Đầu vào tiếp theo: {question}
       Câu hỏi độc lập:
       [phản hồi của bạn ở đây]
 

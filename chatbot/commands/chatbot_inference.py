@@ -31,7 +31,7 @@ def run(
             try:
                 question = dataset.loc[i, "question"]
                 response = chatbot.invoke({"question": question})
-                dataset.loc[i, "response"] = response['answer'].strip()
+                dataset.loc[i, "response"] = response["answer"].strip()
             except Exception as e:
                 dataset.loc[i, "response"] = ""
                 invalid_list.append(i)
