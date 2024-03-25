@@ -11,6 +11,43 @@ model:
     input_prefix: "<s>[INST]"
     input_suffix: "[/INST]"
     input: "Công việc của bạn là tư vấn sản phẩm cho người sử dụng.\nHãy trả lời CÂU HỎI dựa trên NGỮ CẢNH càng chi tiết càng tốt và ngôn ngữ trang trọng, đồng thời đừng bịa đặt bất kỳ thông tin nào đó không phải từ NGỮ CẢNH.\nNếu bạn không biết câu trả lời, hãy nói tôi không biết.\n\nNGỮ CẢNH: {context}\nCÂU HỎI: {question}"
+    condense_question_prompt: |
+      Với cuộc trò chuyện sau đây và một CÂU HỎI TIẾP THEO, hãy diễn đạt lại CÂU HỎI TIẾP THEO thành một câu hỏi độc lập, bằng ngôn ngữ gốc, có thể được sử dụng để truy vấn chỉ mục FAISS. Truy vấn này sẽ được sử dụng để truy xuất tài liệu có ngữ cảnh bổ sung.
+      
+      Hãy để tôi chia sẻ một vài ví dụ sẽ quan trọng.
+
+      Nếu bạn không thấy bất kỳ lịch sử trò chuyện nào, bạn PHẢI trả lại "Đầu vào theo dõi" như sau:
+
+      ```
+      Lịch sử trò chuyện:
+
+      Theo dõi đầu vào: Lawrence thế nào rồi?
+      Câu hỏi độc lập:
+      Lawrence thế nào rồi?
+      ```
+
+      Nếu đây là câu hỏi thứ hai trở đi, bạn nên diễn đạt lại câu hỏi một cách chính xác như thế này:
+
+      ```
+      Lịch sử trò chuyện:
+      Con người: Lawrence thế nào rồi?
+      AI:
+      Lawrence bị chấn thương và phải nghỉ thi đấu hết mùa giải.
+
+      Theo dõi đầu vào: Vết thương của anh ấy là gì?
+      Câu hỏi độc lập:
+      Vết thương của Lawrence là gì?
+      ```
+
+      Bây giờ, với những ví dụ đó, đây là lịch sử trò chuyện thực tế và câu hỏi đầu vào.
+
+      Lịch sử trò chuyện:
+      {lịch sử trò chuyện}
+
+      Đầu vào tiếp theo: {câu hỏi}
+      Câu hỏi độc lập:
+      [phản hồi của bạn ở đây]
+
     pre_prompt: "Bạn là một trợ lí Tiếng Việt nhiệt tình và trung thực. Hãy luôn trả lời một cách hữu ích nhất có thể, đồng thời giữ an toàn.\nCâu trả lời của bạn không nên chứa bất kỳ nội dung gây hại, phân biệt chủng tộc, phân biệt giới tính, độc hại, nguy hiểm hoặc bất hợp pháp nào. Hãy đảm bảo rằng các câu trả lời của bạn không có thiên kiến xã hội và mang tính tích cực. Nếu một câu hỏi không có ý nghĩa hoặc không hợp lý về mặt thông tin, hãy giải thích tại sao thay vì trả lời một điều gì đó không chính xác. Nếu bạn không biết câu trả lời cho một câu hỏi, hãy trả lời là bạn không biết và vui lòng không chia sẻ thông tin sai lệch."
     pre_prompt_prefix: "<s>[INST]  <<SYS>>"
     pre_prompt_suffix: "<</SYS>>"
