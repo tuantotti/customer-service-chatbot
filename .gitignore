@@ -1,7 +1,7 @@
 # Ignore folder in current project
 **/output/llm/**
 **/models/llama.cpp
-**/log/**
+**/log/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
