@@ -7,6 +7,6 @@ class TestQAService:
     def test_inference(self):
         logger = Logger.get_logger()
         question = "Có thể chuyển tiền từ Mobile Money của nhà mạng này sang nhà mạng khác cung cấp được không?"
-        query = QuestionItem(question)
+        query = QuestionItem(question=question)
         response = answer_question(query=query)
         logger.info(response)

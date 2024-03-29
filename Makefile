@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := build
 .PHONY: build quality format clean
 
-CHECK_DIRS := configs rest_api utils chatbot
+CHECK_DIRS := configs rest_api utils chatbot crawler
 
 build:
 	pip install -e .[all]

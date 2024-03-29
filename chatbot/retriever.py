@@ -9,6 +9,11 @@ from configs.config import milvus_config
 
 class VectorStore:
     def __init__(self, embedding_model) -> None:
+        """Initial the params of retriever model
+
+        Args:
+            embedding_model (_type_): the embedding model
+        """
         self.DEFAULT_DOCUMENT_PROMPT = PromptTemplate.from_template(
             template="{page_content}"
         )

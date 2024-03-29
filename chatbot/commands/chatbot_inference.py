@@ -4,6 +4,7 @@ import click
 from tqdm import tqdm
 
 from chatbot.chat import CustomerServiceChatbot
+from rest_api.schemas.items import QuestionItem
 from utils.logger import Logger
 from utils.reader import read_dataset
 
@@ -30,7 +31,8 @@ def run(
         for i in tqdm(range(len(dataset))):
             try:
                 question = dataset.loc[i, "question"]
-                response = chatbot.invoke({"question": question})
+                query = QuestionItem(question=question)
+                response = chatbot.invoke(query=query)
                 dataset.loc[i, "answer"] = response["answer"].strip()
             except Exception as e:
                 dataset.loc[i, "answer"] = ""

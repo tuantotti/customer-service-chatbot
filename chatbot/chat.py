@@ -1,4 +1,5 @@
 from operator import itemgetter
+from typing import Dict, Union
 
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import get_buffer_string
@@ -12,21 +13,27 @@ from chatbot.retriever import VectorStore
 from configs.config import llm_config
 from rest_api.schemas.items import QueryItem, QuestionItem
 
-from typing import Union
-
 
 class CustomerServiceChatbot:
-    def __init__(self, use_retriever=False, is_hf_model=False) -> None:
-        self.is_hf_model = is_hf_model
+    def __init__(self, use_retriever=False) -> None:
+        """Initial params
+
+        Args:
+            use_retriever (bool, optional): this flag checks whether using retriever model. Defaults to False.
+        """
         self.use_retriever = use_retriever
         self.memory = self.init_memory()
         self.chain = self.init_chain()
 
-    def get_history(self):
-        self.history = RunnablePassthrough.assign(
-            chat_history=RunnableLambda(self.memory.load_memory_variables)
-            | itemgetter("history")
-        )
+    def get_history(self) -> Dict:
+        """get the history of conversation
+
+        Returns:
+            list: list of messages between AI and human
+        """
+        history = self.memory.load_memory_variables(inputs={"history"})
+
+        return history
 
     def init_chain(self):
         prompt = PredefinedPrompt()
@@ -45,19 +52,32 @@ class CustomerServiceChatbot:
 
         return chain
 
-    def invoke(self, query: Union[QueryItem, QuestionItem]):
+    def invoke(self, query: Union[QueryItem, QuestionItem]) -> Dict:
+        """invoke the chain
+
+        Args:
+            query (Union[QueryItem, QuestionItem]): the input including question or a pair of question and context
+
+        Returns:
+            Dict: the answer of incoming query
+        """
         answer = None
         answer = self.chain.invoke(query.dict())
 
         if not self.use_retriever:
             answer = {"answer": answer}
-        
+
         if self.memory:
             self.memory.save_context(query.dict(), {"answer": answer["answer"]})
-            
+
         return answer
 
     def init_memory(self):
+        """init the memory cache
+
+        Returns:
+            _type_: the memory object
+        """
         memory = ConversationBufferMemory(
             return_messages=True, output_key="answer", input_key="question"
         )
@@ -72,7 +92,7 @@ class CustomerServiceChatbot:
         return self.answer_chain
 
     def get_conversional_chain(self):
-        loaded_memory = RunnablePassthrough.assign(
+        history = RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
             | itemgetter("history"),
         )
@@ -91,7 +111,9 @@ class CustomerServiceChatbot:
         }
 
         retrieved_documents = {
-            "docs": itemgetter("standalone_question") | self.retriever | vector_store._combine_documents,
+            "docs": itemgetter("standalone_question")
+            | self.retriever
+            | vector_store._combine_documents,
             "question": lambda x: x["standalone_question"],
         }
 
@@ -106,6 +128,6 @@ class CustomerServiceChatbot:
             "context": final_inputs["context"],
         }
 
-        chain = loaded_memory | standalone_question | retrieved_documents | answer
+        chain = history | standalone_question | retrieved_documents | answer
 
         return chain

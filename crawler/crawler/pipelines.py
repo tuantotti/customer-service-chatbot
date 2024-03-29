@@ -1,6 +1,6 @@
 import pymongo
-from itemadapter import ItemAdapter
 from crawler.utils import check_spider_pipeline
+from itemadapter import ItemAdapter
 
 
 class MongoPipeline:

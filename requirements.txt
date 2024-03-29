@@ -24,3 +24,7 @@ black
 isort==5.13.2
 fastapi==0.110.0
 uvicorn==0.28.1
+Scrapy
+bs4
+pymongo==4.6.3
+scrapyd==1.4.3

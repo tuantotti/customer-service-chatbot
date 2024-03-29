@@ -4,9 +4,9 @@ import click
 from tqdm import tqdm
 
 from chatbot.chat import CustomerServiceChatbot
+from rest_api.schemas.items import QueryItem
 from utils.logger import Logger
 from utils.reader import read_dataset
-from rest_api.schemas.items import QueryItem
 
 logger = Logger.get_logger()
 
@@ -34,7 +34,7 @@ def run(
                     dataset.loc[i, "question"],
                     dataset.loc[i, "context"],
                 )
-                query = QueryItem(question, context)
+                query = QueryItem(question=question, context=context)
                 response = chatbot.invoke(query=query)
                 dataset.loc[i, "response"] = response.strip()
             except Exception as e:
