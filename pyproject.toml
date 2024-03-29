@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "customer-service-chatbot"
+version = "0.1.0"
+description = ""
+authors = ["tuantotti <tuantotti14032001@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+chatbot = "^1.5.2b0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
