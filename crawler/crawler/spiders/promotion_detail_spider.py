@@ -3,7 +3,7 @@ from typing import Any, AnyStr, Optional
 import pandas as pd
 from bs4 import BeautifulSoup
 from crawler.items import PromotionDetailItem
-from crawler.pipelines import MongoPipeline
+from crawler.pipelines import MongoPipeline, CleanDocumentPipeline
 from scrapy import Spider
 from scrapy.selector import Selector
 
@@ -19,7 +19,7 @@ class PromotionSpider(Spider):
         """
         super().__init__(name, **kwargs)
         self.start_urls = self.init_start_urls()
-        self.pipeline = set([MongoPipeline])
+        self.pipeline = set([CleanDocumentPipeline, MongoPipeline])
 
     def init_start_urls(self):
         """Initially urls to crawl from promotion file
@@ -65,7 +65,7 @@ class PromotionSpider(Spider):
         for promotion_container in promotion_containers:
             promotion_container_html = promotion_container.get()
             soup = BeautifulSoup(promotion_container_html)
-            clean_text = soup.get_text().strip()
+            clean_text = soup.get_text(separator="\n", strip=True).strip()
             result += clean_text + " "
 
         return result

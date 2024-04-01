@@ -1,7 +1,21 @@
 import pymongo
-from crawler.utils import check_spider_pipeline
+from crawler.utils import check_spider_pipeline, CleanText
 from itemadapter import ItemAdapter
 
+class CleanDocumentPipeline:
+    def __init__(self, clean_text: CleanText):
+        self.clean_text = clean_text
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(
+            clean_text = CleanText()
+        )
+
+    @check_spider_pipeline
+    def process_item(self, item, spider):
+        item['content'] = self.clean_text(text=item['content'])
+        return item
 
 class MongoPipeline:
     collection_name = "crawled-data"
