@@ -1,0 +1,4 @@
+telegram:
+  bot_token: 7041571447:AAEJ_sH5-HHr46Fs8d1tAN3P38rKNMnqRxw
+  bot_user_name: vnptcustomer_chatbot
+  URL: https://c857-2402-800-61b3-1cf4-e125-8b7a-7dab-b0bd.ngrok-free.app/ # base api

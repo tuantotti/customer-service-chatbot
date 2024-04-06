@@ -36,9 +36,9 @@ def run(
                 )
                 query = QueryItem(question=question, context=context)
                 response = chatbot.invoke(query=query)
-                dataset.loc[i, "response"] = response.strip()
+                dataset.loc[i, "answer"] = response.strip()
             except Exception as e:
-                dataset.loc[i, "response"] = ""
+                dataset.loc[i, "answer"] = ""
                 invalid_list.append(i)
                 logger.error(e)
 

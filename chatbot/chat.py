@@ -86,7 +86,7 @@ class CustomerServiceChatbot:
 
     def get_answer_chain(self):
         self.answer_chain = (
-            self.CONDENSE_QUESTION_PROMPT | self.llm | self.output_parser
+            self.ANSWER_PROMPT | self.llm | self.output_parser
         )
 
         return self.answer_chain

@@ -8,3 +8,9 @@ milvus:
     vector_field: vector
     primary_field: id
     text_field: raw_text
+
+mongodb:
+  connection_args:
+    uri: mongodb+srv://tuannv140301:VOHHcofMExtXBcXW@cluster0.qsugxut.mongodb.net/
+  collection_args:
+    database_name: customer-service-chatbot

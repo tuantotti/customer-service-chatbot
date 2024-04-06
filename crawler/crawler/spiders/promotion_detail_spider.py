@@ -3,7 +3,7 @@ from typing import Any, AnyStr, Optional
 import pandas as pd
 from bs4 import BeautifulSoup
 from crawler.items import PromotionDetailItem
-from crawler.pipelines import MongoPipeline, CleanDocumentPipeline
+from crawler.pipelines import CleanDocumentPipeline, MongoPipeline
 from scrapy import Spider
 from scrapy.selector import Selector
 
