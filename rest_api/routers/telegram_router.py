@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Response, BackgroundTasks
-
+from rest_api.schemas.items import WebhookItem
 from configs.config import telegram_config
 from rest_api.services import telegram_service
 
@@ -8,8 +8,8 @@ TELEGRAM_TOKEN = telegram_config["bot_token"]
 
 
 @router.post("/setwebhook")
-async def set_webhook():
-    is_set_webhook = await telegram_service.set_webhook()
+async def set_webhook(webhook: WebhookItem):
+    is_set_webhook = await telegram_service.set_webhook(webhook)
 
     if is_set_webhook:
         return "webhook setup successfully"

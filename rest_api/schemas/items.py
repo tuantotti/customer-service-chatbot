@@ -28,3 +28,6 @@ class CustomerChatItem(BaseModel):
     userId: Optional[str] = Field(default=None)
     messages: List[MessageItem]
     type: Optional[str] = Field(default=ChatType.PRIVATE) 
+
+class WebhookItem(BaseModel):
+    webhook: str = Field(default=None)

@@ -5,13 +5,12 @@ from pymongo import MongoClient
 from configs.config import telegram_config, mongo_config
 from utils.logger import Logger
 from rest_api.services.qa_service import answer_question
-from rest_api.schemas.items import QueryItem, MessageItem, CustomerChatItem, Role
+from rest_api.schemas.items import QueryItem, MessageItem, CustomerChatItem, Role, WebhookItem
 
 
 logger = Logger.get_logger()
 
 TELEGRAM_TOKEN = telegram_config["bot_token"]
-URL = telegram_config["URL"]
 
 bot = telegram.Bot(token=telegram_config["bot_token"])
 mongo_client = MongoClient(host=mongo_config.URI)
@@ -19,8 +18,10 @@ customer_db = mongo_client[mongo_config.DATABASE_NAME]
 
 
 
-async def set_webhook():
-    url = "{URL}{HOOK}".format(URL=URL, HOOK=TELEGRAM_TOKEN)
+async def set_webhook(webhook: WebhookItem):
+    URL = webhook.webhook
+    
+    url = "{URL}/{HOOK}".format(URL=URL, HOOK=TELEGRAM_TOKEN)
     logger.info(url)
     is_set_webhook = await bot.setWebhook(url)
 
