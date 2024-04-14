@@ -18,7 +18,7 @@ logger = Logger.get_logger()
 
 
 class CustomerServiceChatbot:
-    def __init__(self, use_retriever=False) -> None:
+    def __init__(self, use_retriever=True) -> None:
         """Initial params
 
         Args:
@@ -65,7 +65,7 @@ class CustomerServiceChatbot:
             Dict: the answer of incoming query
         """
         answer = None
-        answer = self.chain.invoke(query.dict())
+        answer = self.chain.invoke(query.model_dump())
 
         logger.info(answer)
         
@@ -74,7 +74,7 @@ class CustomerServiceChatbot:
             answer = {"answer": answer}
 
         if self.memory:
-            self.memory.save_context(query.dict(), {"answer": answer["answer"]})
+            self.memory.save_context(query.model_dump(), {"answer": answer["answer"]})
 
         return answer
 

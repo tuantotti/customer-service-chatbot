@@ -10,7 +10,7 @@ model:
   inference_params: 
     input_prefix: "<s>[INST]"
     input_suffix: "[/INST]"
-    input: "Công việc của bạn là tư vấn sản phẩm cho người sử dụng.\nHãy trả lời CÂU HỎI dựa trên NGỮ CẢNH càng chi tiết càng tốt và ngôn ngữ trang trọng, đồng thời đừng bịa đặt bất kỳ thông tin nào đó không phải từ NGỮ CẢNH.\nNếu bạn không biết câu trả lời, hãy nói tôi không biết.\n\nNGỮ CẢNH: {context}\nCÂU HỎI: {question}"
+    input: "Bạn là chuyên gia chăm sóc khách hàng. Công việc của bạn là tư vấn sản phẩm cho người sử dụng. Giọng điệu trong câu trả lời của bạn phải ấm áp, tử tế và lịch sự.\nHãy trả lời ngắn gọn, dễ hiểu cho khách hàng về CÂU HỎI dựa trên NGỮ CẢNH càng chi tiết càng tốt và ngôn ngữ trang trọng, đồng thời đừng bịa đặt bất kỳ thông tin nào đó không phải từ NGỮ CẢNH.\nNếu bạn không biết câu trả lời, hãy nói tôi không biết.\n\nNGỮ CẢNH: {context}\nCÂU HỎI: {question}"
     condense_question_prompt: |
       Với cuộc trò chuyện sau đây và một CÂU HỎI TIẾP THEO, hãy diễn đạt lại CÂU HỎI TIẾP THEO thành một câu hỏi độc lập, bằng ngôn ngữ gốc, có thể được sử dụng để truy vấn chỉ mục FAISS. Truy vấn này sẽ được sử dụng để truy xuất tài liệu có ngữ cảnh bổ sung.
       
