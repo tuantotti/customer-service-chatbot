@@ -12,6 +12,9 @@ from chatbot.prompts import PredefinedPrompt
 from chatbot.retriever import VectorStore
 from configs.config import llm_config
 from rest_api.schemas.items import QueryItem, QuestionItem
+from utils.logger import Logger
+
+logger = Logger.get_logger()
 
 
 class CustomerServiceChatbot:
@@ -63,6 +66,9 @@ class CustomerServiceChatbot:
         """
         answer = None
         answer = self.chain.invoke(query.dict())
+
+        logger.info(answer)
+        
 
         if not self.use_retriever:
             answer = {"answer": answer}

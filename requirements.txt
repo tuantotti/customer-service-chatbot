@@ -29,3 +29,5 @@ bs4
 pymongo==4.6.3
 scrapyd==1.4.3
 python-telegram-bot==21.0.1
+pyngrok
+g4f

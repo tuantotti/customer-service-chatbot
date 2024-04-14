@@ -45,6 +45,8 @@ async def respond(request: Dict, background_tasks: BackgroundTasks):
         question = QueryItem(question=text)
         # AI service to generate response
         ai_answer = await answer_question(query=question)
+        ai_answer = ai_answer['answer']
+        logger.info(f"AI: {ai_answer}")
         # send message to user
         message = await bot.sendMessage(chat_id=chat_id, text=ai_answer, reply_to_message_id=msg_id)
         
