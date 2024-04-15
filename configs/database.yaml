@@ -4,13 +4,14 @@ milvus:
     user: db_7f0182a96e77a1f
     password: Op7]E[[hBZf9t9uB
   collection_args:
-    collection_name: Test_Question_Embedding
+    collection_name: Promote_Embedding
     vector_field: vector
     primary_field: id
-    text_field: raw_text
+    text_field: text
+    auto_id: True
 
 mongodb:
   connection_args:
-    uri: mongodb+srv://tuannv140301:VOHHcofMExtXBcXW@cluster0.qsugxut.mongodb.net/
+    uri: mongodb+srv://tuannv140301:9arqZL6UsMhhHsI0@cluster0.qsugxut.mongodb.net/
   collection_args:
     database_name: customer-service-chatbot

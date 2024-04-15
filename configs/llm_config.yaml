@@ -16,37 +16,33 @@ model:
       
       Hãy để tôi chia sẻ một vài ví dụ sẽ quan trọng.
 
-      Nếu bạn không thấy bất kỳ lịch sử trò chuyện nào, bạn PHẢI trả lại "Đầu vào theo dõi" như sau:
+      Nếu bạn không thấy bất kỳ lịch sử trò chuyện nào, bạn PHẢI trả lại "Câu hỏi độc lập" như sau:
 
       ```
       Lịch sử trò chuyện:
 
-      Theo dõi đầu vào: Lawrence thế nào rồi?
-      Câu hỏi độc lập:
-      Lawrence thế nào rồi?
+      Câu hỏi tiếp theo: Lawrence thế nào rồi?
+      Câu hỏi độc lập: Lawrence thế nào rồi?
       ```
 
-      Nếu đây là câu hỏi thứ hai trở đi, bạn nên diễn đạt lại câu hỏi một cách chính xác như thế này:
+      Nếu đây là câu hỏi thứ hai trở đi, bạn nên diễn đạt lại câu hỏi độc lập một cách chính xác như thế này:
 
       ```
       Lịch sử trò chuyện:
       Con người: Lawrence thế nào rồi?
-      AI:
-      Lawrence bị chấn thương và phải nghỉ thi đấu hết mùa giải.
+      AI: Lawrence bị chấn thương và phải nghỉ thi đấu hết mùa giải.
 
-      Theo dõi đầu vào: Vết thương của anh ấy là gì?
-      Câu hỏi độc lập:
-      Vết thương của Lawrence là gì?
+      Câu hỏi tiếp theo: Vết thương của anh ấy là gì?
+      Câu hỏi độc lập: Vết thương của Lawrence là gì?
       ```
 
-      Bây giờ, với những ví dụ đó, đây là lịch sử trò chuyện thực tế và câu hỏi đầu vào.
+      Bây giờ, với những ví dụ đó, đây là lịch sử trò chuyện thực tế và câu hỏi đầu vào, hãy tạo ra câu hỏi độc lập.
 
       Lịch sử trò chuyện:
       {chat_history}
 
-      Đầu vào tiếp theo: {question}
+      Câu hỏi tiếp theo: {question}
       Câu hỏi độc lập:
-      [phản hồi của bạn ở đây]
 
     pre_prompt: "Bạn là một trợ lí Tiếng Việt nhiệt tình và trung thực. Hãy luôn trả lời một cách hữu ích nhất có thể, đồng thời giữ an toàn.\nCâu trả lời của bạn không nên chứa bất kỳ nội dung gây hại, phân biệt chủng tộc, phân biệt giới tính, độc hại, nguy hiểm hoặc bất hợp pháp nào. Hãy đảm bảo rằng các câu trả lời của bạn không có thiên kiến xã hội và mang tính tích cực. Nếu một câu hỏi không có ý nghĩa hoặc không hợp lý về mặt thông tin, hãy giải thích tại sao thay vì trả lời một điều gì đó không chính xác. Nếu bạn không biết câu trả lời cho một câu hỏi, hãy trả lời là bạn không biết và vui lòng không chia sẻ thông tin sai lệch."
     pre_prompt_prefix: "<s>[INST]  <<SYS>>"

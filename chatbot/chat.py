@@ -4,7 +4,8 @@ from typing import Dict, Union
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import get_buffer_string
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from langchain_core.runnables import (RunnableLambda, RunnableParallel,
+                                      RunnablePassthrough)
 
 from chatbot.embedd import EmbeddingModel
 from chatbot.generator import Generator
@@ -18,13 +19,17 @@ logger = Logger.get_logger()
 
 
 class CustomerServiceChatbot:
-    def __init__(self, use_retriever=True) -> None:
+    def __init__(self, use_retriever=True, use_chat_history=False) -> None:
         """Initial params
 
         Args:
             use_retriever (bool, optional): this flag checks whether using retriever model. Defaults to False.
         """
         self.use_retriever = use_retriever
+        self.use_chat_history = use_chat_history
+        embedding_model = EmbeddingModel()
+        self.vector_store = VectorStore(embedding_model=embedding_model.model)
+        self.retriever = self.vector_store.get_retriever()
         self.memory = self.init_memory()
         self.chain = self.init_chain()
 
@@ -48,8 +53,10 @@ class CustomerServiceChatbot:
 
         self.output_parser = StrOutputParser()
 
-        if self.use_retriever:
+        if self.use_retriever and self.use_chat_history:
             chain = self.get_conversional_chain()
+        elif self.use_retriever and not self.use_chat_history:
+            chain = self.get_retrieval_chain()
         else:
             chain = self.get_answer_chain()
 
@@ -67,14 +74,12 @@ class CustomerServiceChatbot:
         answer = None
         answer = self.chain.invoke(query.model_dump())
 
-        logger.info(answer)
-        
-
-        if not self.use_retriever:
+        if not self.use_retriever or isinstance(answer, str):
             answer = {"answer": answer}
 
-        if self.memory:
-            self.memory.save_context(query.model_dump(), {"answer": answer["answer"]})
+        logger.info(type(answer))
+        # if self.memory:
+        #     self.memory.save_context(query.model_dump(), {"answer": answer["answer"]})
 
         return answer
 
@@ -91,11 +96,29 @@ class CustomerServiceChatbot:
         return memory
 
     def get_answer_chain(self):
-        self.answer_chain = (
-            self.ANSWER_PROMPT | self.llm | self.output_parser
+        answer_chain = self.ANSWER_PROMPT | self.llm | self.output_parser
+
+        return answer_chain
+
+    def get_retrieval_chain(self):
+        logger.info("get_retrieval_chain")
+        rag_chain_from_docs = (
+            RunnablePassthrough.assign(context=lambda x: x["context"])
+            | self.ANSWER_PROMPT
+            | self.llm
+            | StrOutputParser()
         )
 
-        return self.answer_chain
+        chain = RunnableParallel(
+            {
+                "context": itemgetter("question")
+                | self.retriever
+                | self.vector_store._combine_documents,
+                "question": itemgetter("question") | RunnablePassthrough(),
+            }
+        ).assign(answer=rag_chain_from_docs)
+
+        return chain
 
     def get_conversional_chain(self):
         history = RunnablePassthrough.assign(
@@ -103,14 +126,14 @@ class CustomerServiceChatbot:
             | itemgetter("history"),
         )
 
-        embedding_model = EmbeddingModel()
-        vector_store = VectorStore(embedding_model=embedding_model.model)
-        self.retriever = vector_store.get_retriever()
-
         standalone_question = {
             "standalone_question": {
                 "question": lambda x: x["question"],
-                "chat_history": lambda x: get_buffer_string(x["chat_history"]),
+                "chat_history": lambda x: (
+                    ""
+                    if self.use_chat_history
+                    else get_buffer_string(x["chat_history"])
+                ),
             }
             | self.CONDENSE_QUESTION_PROMPT
             | self.llm,
@@ -119,7 +142,7 @@ class CustomerServiceChatbot:
         retrieved_documents = {
             "docs": itemgetter("standalone_question")
             | self.retriever
-            | vector_store._combine_documents,
+            | self.vector_store._combine_documents,
             "question": lambda x: x["standalone_question"],
         }
 

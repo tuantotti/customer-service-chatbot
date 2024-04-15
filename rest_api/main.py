@@ -1,9 +1,11 @@
+import nest_asyncio
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from rest_api.routers import telegram_router
-import nest_asyncio
 from pyngrok import ngrok
+
+from rest_api.routers import telegram_router
+
 # from rest_api.routers import qa_router
 
 app = FastAPI(
@@ -15,10 +17,10 @@ app.include_router(telegram_router.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

@@ -1,21 +1,25 @@
 import datetime
 
 import click
+from g4f.client import Client
 from tqdm import tqdm
 
-from g4f.client import Client
 from rest_api.schemas.items import QuestionItem
 from utils.logger import Logger
 from utils.reader import read_dataset
 
 logger = Logger.get_logger()
 
-METHOD_TYPE = {
-    1: "Generate_Prompt"
-}
+METHOD_TYPE = {1: "Generate_Prompt"}
+
 
 @click.command()
-@click.option("--input_dir", "-i", default="crawler/output/promotion_detail_raw.csv", help="Input file path")
+@click.option(
+    "--input_dir",
+    "-i",
+    default="crawler/output/promotion_detail_raw.csv",
+    help="Input file path",
+)
 @click.option(
     "--method_type",
     "-t",
@@ -44,18 +48,15 @@ def run(
 
                 dataset.loc[i, "prompt"] = prompt
 
-            else: 
+            else:
                 dataset.loc[i, "prompt"] = ""
-    
+
     now = datetime.datetime.now()
     current_time_ft = now.strftime("%Y-%m-%d %H:%M")
     file_name = f"llm_{current_time_ft}.csv"
     output_path = f"{output_dir}{METHOD_TYPE[method_type]}_{file_name}"
     dataset.to_csv(output_path, index=False)
     logger.info(f"Save llm'response in {output_path}")
-
-
-        
 
 
 if __name__ == "__main__":
