@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import AnyStr, List, Optional
 
+from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
 
@@ -20,6 +21,15 @@ class QueryItem(BaseModel):
 
 class QuestionItem(BaseModel):
     question: AnyStr
+
+
+class AnswerItem(BaseModel):
+    question: QuestionItem = Field(default=None)
+    context: AnyStr = Field(default="")
+    raw_context: List[Document]
+    docs: List[Document]
+    answer: AnyStr = Field(default=None)
+    is_continue: bool = Field(default=False)
 
 
 class MessageItem(BaseModel):

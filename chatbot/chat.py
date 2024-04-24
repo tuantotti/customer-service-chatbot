@@ -10,9 +10,10 @@ from langchain_core.runnables import (RunnableLambda, RunnableParallel,
 from chatbot.embedd import EmbeddingModel
 from chatbot.generator import Generator
 from chatbot.prompts import PredefinedPrompt
+from chatbot.reranker import BM25RerankerImpl
 from chatbot.retriever import VectorStore
 from configs.config import llm_config
-from rest_api.schemas.items import QueryItem, QuestionItem
+from rest_api.schemas.items import AnswerItem, QueryItem, QuestionItem
 from utils.logger import Logger
 
 logger = Logger.get_logger()
@@ -62,7 +63,7 @@ class CustomerServiceChatbot:
 
         return chain
 
-    def invoke(self, query: Union[QueryItem, QuestionItem]) -> Dict:
+    def invoke(self, query: Union[QueryItem, QuestionItem]) -> AnswerItem:
         """invoke the chain
 
         Args:
@@ -77,9 +78,29 @@ class CustomerServiceChatbot:
         if not self.use_retriever or isinstance(answer, str):
             answer = {"answer": answer}
 
-        logger.info(type(answer))
         # if self.memory:
         #     self.memory.save_context(query.model_dump(), {"answer": answer["answer"]})
+
+        answer = self.post_process_answer(answer)
+        answer_item = AnswerItem(
+            question=answer["question"],
+            context=answer["context"],
+            raw_context=answer["raw_context"],
+            docs=answer["docs"],
+            answer=answer["answer"],
+            is_continue=answer["is_continue"],
+        )
+
+        return answer_item
+
+    def post_process_answer(self, answer):
+        url = answer["raw_context"][0].metadata["url"]
+        hard_additional_answer = f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link sau: {url}"
+
+        if answer["answer"].endwith("."):
+            answer["answer"] += hard_additional_answer
+        else:
+            answer["is_blocked"] = True
 
         return answer
 
@@ -102,23 +123,36 @@ class CustomerServiceChatbot:
 
     def get_retrieval_chain(self):
         logger.info("get_retrieval_chain")
-        rag_chain_from_docs = (
-            RunnablePassthrough.assign(context=lambda x: x["context"])
-            | self.ANSWER_PROMPT
-            | self.llm
-            | StrOutputParser()
-        )
+        query = RunnablePassthrough.assign(question=lambda x: x["question"])
+        retrieved_documents = {
+            "question": itemgetter("question"),
+            "docs": itemgetter("question") | self.retriever,
+        }
 
-        chain = RunnableParallel(
-            {
-                "context": itemgetter("question")
-                | self.retriever
-                | self.vector_store._combine_documents,
-                "question": itemgetter("question") | RunnablePassthrough(),
-            }
-        ).assign(answer=rag_chain_from_docs)
+        final_inputs = {
+            "question": itemgetter("question"),
+            "context": lambda x: self.post_process_retrieval(x["question"], x["docs"]),
+        }
+
+        output = {
+            "question": itemgetter("question"),
+            "docs": itemgetter("docs"),
+            "raw_context": final_inputs["context"],
+            "context": self.vector_store._combine_documents(final_inputs["context"]),
+            "answer": final_inputs | self.ANSWER_PROMPT | self.llm | StrOutputParser(),
+        }
+
+        chain = query | retrieved_documents | output
 
         return chain
+
+    def post_process_retrieval(self, question, docs):
+        reranked_docs = self.reranking(question, docs)
+        return reranked_docs
+
+    def reranking(self, question, docs):
+        reranker = BM25RerankerImpl.from_documents(docs, k=1)
+        return reranker.invoke(question)
 
     def get_conversional_chain(self):
         history = RunnablePassthrough.assign(
@@ -152,9 +186,9 @@ class CustomerServiceChatbot:
         }
 
         answer = {
-            "answer": final_inputs | self.ANSWER_PROMPT | self.llm,
             "question": itemgetter("question"),
             "context": final_inputs["context"],
+            "answer": final_inputs | self.ANSWER_PROMPT | self.llm,
         }
 
         chain = history | standalone_question | retrieved_documents | answer

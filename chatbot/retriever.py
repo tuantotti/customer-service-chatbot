@@ -25,7 +25,7 @@ class VectorStore:
 
     def get_retriever(self):
         return self.vector_db.as_retriever(
-            search_type="similarity", search_kwargs={"metric_type": "COSINE", "k": 2}
+            search_type="similarity", search_kwargs={"metric_type": "COSINE", "k": 10}
         )
 
     def similarity_search(self, query, limit) -> List:

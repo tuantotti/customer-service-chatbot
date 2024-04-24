@@ -31,3 +31,4 @@ scrapyd==1.4.3
 python-telegram-bot==21.0.1
 pyngrok
 g4f
+rank_bm25==0.2.2

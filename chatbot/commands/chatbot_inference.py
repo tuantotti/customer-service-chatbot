@@ -1,6 +1,7 @@
 import datetime
 
 import click
+import pandas as pd
 from tqdm import tqdm
 
 from chatbot.chat import CustomerServiceChatbot
@@ -27,23 +28,22 @@ def run(
     dataset = read_dataset(input_dir=input_dir)
 
     if dataset is not None:
-        invalid_list = []
+        responses = []
         for i in tqdm(range(len(dataset))):
             try:
                 question = dataset.loc[i, "question"]
                 query = QuestionItem(question=question)
                 response = chatbot.invoke(query=query)
-                dataset.loc[i, "answer"] = response["answer"].strip()
+                responses.append(response)
             except Exception as e:
-                dataset.loc[i, "answer"] = ""
-                invalid_list.append(i)
                 logger.error(e)
 
         now = datetime.datetime.now()
         current_time_ft = now.strftime("%Y-%m-%d %H:%M")
         file_name = f"chatbot_{current_time_ft}.csv"
         output_path = f"{output_dir}{file_name}"
-        dataset.to_csv(output_path, index=False)
+        response_df = pd.DataFrame(responses)
+        response_df.to_csv(output_path, index=False)
         logger.info(f"Save chatbot'response in {output_path}")
 
 

@@ -1,10 +1,11 @@
-import pymongo
-from crawler.utils import CleanText, check_spider_pipeline
-from crawler.items import PromotionDetailItem
-from itemadapter import ItemAdapter
 import re
-from typing import List
 from datetime import datetime
+from typing import List
+
+import pymongo
+from crawler.items import PromotionDetailItem
+from crawler.utils import CleanText, check_spider_pipeline
+from itemadapter import ItemAdapter
 
 
 class CleanDocumentPipeline:
@@ -14,7 +15,7 @@ class CleanDocumentPipeline:
     @classmethod
     def from_crawler(cls, crawler):
         return cls(clean_text=CleanText())
-    
+
     def check_expire_item(self, item: PromotionDetailItem) -> bool:
         """check whether a promotion item is expire or not expire
 
@@ -25,10 +26,10 @@ class CleanDocumentPipeline:
             bool: True if a promotion is expire otherwise False
         """
         date_pattern = r"[0-9]+/[0-9]+/[0-9]+"
-        extract_date = re.findall(date_pattern, item['date_range'])
+        extract_date = re.findall(date_pattern, item["date_range"])
 
         return self.is_expire_date(extract_date)
-    
+
     def is_expire_date(self, extract_date: List) -> bool:
         """Check a date or a range of date is expire or not expire compared to current date
 
@@ -38,7 +39,7 @@ class CleanDocumentPipeline:
         Returns:
             bool: True if date is expire, otherwise return False
         """
-        from_date, end_date = '', ''
+        from_date, end_date = "", ""
         is_expire = False
         if len(extract_date) == 1:
             from_date = extract_date[0]
@@ -49,7 +50,7 @@ class CleanDocumentPipeline:
 
         today = datetime.today()
         if end_date:
-            end_date_obj = datetime.strptime(end_date, '%d/%m/%Y')
+            end_date_obj = datetime.strptime(end_date, "%d/%m/%Y")
             is_expire = from_date < today < end_date_obj
         elif from_date:
             is_expire = from_date < today
