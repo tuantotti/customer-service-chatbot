@@ -80,7 +80,7 @@ class CustomerServiceChatbot:
 
         # if self.memory:
         #     self.memory.save_context(query.model_dump(), {"answer": answer["answer"]})
-
+        logger.info(answer)
         answer = self.post_process_answer(answer)
         answer_item = AnswerItem(
             question=answer["question"],
@@ -94,13 +94,13 @@ class CustomerServiceChatbot:
         return answer_item
 
     def post_process_answer(self, answer):
-        url = answer["raw_context"][0].metadata["url"]
+        url = answer["raw_context"][0].metadata["metadata"]["url"]
         hard_additional_answer = f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link sau: {url}"
 
-        if answer["answer"].endwith("."):
+        if answer["answer"].endswith("."):
             answer["answer"] += hard_additional_answer
         else:
-            answer["is_blocked"] = True
+            answer["is_continue"] = True
 
         return answer
 
@@ -138,7 +138,7 @@ class CustomerServiceChatbot:
             "question": itemgetter("question"),
             "docs": itemgetter("docs"),
             "raw_context": final_inputs["context"],
-            "context": self.vector_store._combine_documents(final_inputs["context"]),
+            "context": final_inputs["context"],
             "answer": final_inputs | self.ANSWER_PROMPT | self.llm | StrOutputParser(),
         }
 

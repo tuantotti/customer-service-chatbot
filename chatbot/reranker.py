@@ -90,7 +90,7 @@ class BM25RerankerImpl(BaseRetriever):
     def from_documents(
         cls,
         documents: Iterable[Document],
-        algorithm_name: Optional[str],
+        algorithm_name: Optional[str] = AlgorithmName.BM25PLUS,
         *,
         bm25_params: Optional[Dict[str, Any]] = None,
         preprocess_func: Callable[[str], List[str]] = default_preprocessing_func,
