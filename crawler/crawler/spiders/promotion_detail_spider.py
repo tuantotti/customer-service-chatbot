@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, AnyStr, Optional
 
 import pandas as pd
@@ -43,6 +44,7 @@ class PromotionSpider(Spider):
         promotion_selector = Selector(response).css(
             "div.promotionDetail-content div.promotionDetail-container"
         )
+        detail_item["id"] = str(uuid.uuid4())
         detail_item["title"] = promotion_selector.css("h3::text").get()
         detail_item["date_range"] = promotion_selector.css("span::text").get()
         detail_item["content"] = self.extract_text(promotion_selector)

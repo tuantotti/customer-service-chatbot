@@ -8,6 +8,7 @@ class PromotionItem(scrapy.Item):
 
 
 class PromotionDetailItem(scrapy.Item):
+    id = scrapy.Field()
     title = scrapy.Field()
     date_range = scrapy.Field()
     content = scrapy.Field()

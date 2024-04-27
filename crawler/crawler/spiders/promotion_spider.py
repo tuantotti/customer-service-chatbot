@@ -8,6 +8,7 @@ class PromotionSpider(Spider):
     start_urls = [
         "https://vnptpay.vn/web/khuyenmai",
     ]
+    pipeline = set([])
 
     def parse(self, response):
         base_url = "https://vnptpay.vn/web/"
