@@ -23,6 +23,7 @@ class MilvusConfig:
         milvus_params = _config["milvus"]
         self.connection_args = milvus_params["connection_args"]
         self.collection_args = milvus_params["collection_args"]
+        self.search_params = milvus_params["search_params"]
 
 
 class MongoConfig:

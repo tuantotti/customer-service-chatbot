@@ -4,7 +4,6 @@ import click
 # from g4f.client import Client
 from tqdm import tqdm
 
-from rest_api.schemas.items import QuestionItem
 from utils.logger import Logger
 from utils.reader import read_dataset
 
@@ -55,7 +54,7 @@ Cặp câu hỏi, câu trả lời:
 ************
 Khách hàng: Tôi muốn tham gia chương trình khuyến mãi "Tiết kiệm 20.000đ thanh toán Điện, Nước qua VNPT Money". Xin cho tôi biết thời gian triển khai là khi nào?
 ******
-Nhân viên: Thưa quý khách, chương trình "Tiết kiệm 20.000đ thanh toán Điện, Nước qua VNPT Money" được triển khai từ ngày 06/3/2024 đến ngày 30/4/2024. Để biết thêm thông tin chi tiết vui lòng truy cập đường dẫn https://vnptpay.vn/web/khuyenmai/diennuoc0324.
+Nhân viên: Thưa quý khách, chương trình "Tiết kiệm 20.000đ thanh toán Điện, Nước qua VNPT Money" được triển khai từ ngày 06/3/2024 đến ngày 30/4/2024.
 ************
 
 Dựa vào ví dụ mà tôi đã cung cấp, hãy tạo ra 20 cặp câu hỏi, câu trả lời giữa người dùng và nhân viên chăm sóc khách hàng ứng với CHƯƠNG TRÌNH KHUYẾN MÃI dưới đây: 

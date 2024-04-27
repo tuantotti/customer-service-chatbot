@@ -6,9 +6,14 @@ milvus:
   collection_args:
     collection_name: Promote_Embedding
     vector_field: vector
-    primary_field: id
+    primary_field: Auto_id
     text_field: text
     auto_id: True
+  search_params:
+    metric_type: COSINE
+    params:
+        radius: 0.8 # threshold
+        range_filter : 1
 
 mongodb:
   connection_args:

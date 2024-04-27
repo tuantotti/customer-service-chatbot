@@ -17,6 +17,7 @@ class VectorStore:
         self.DEFAULT_DOCUMENT_PROMPT = PromptTemplate.from_template(
             template="{page_content}"
         )
+        self.param = milvus_config.search_params
         self.vector_db = Milvus(
             embedding_function=embedding_model,
             connection_args=milvus_config.connection_args,
@@ -25,7 +26,7 @@ class VectorStore:
 
     def get_retriever(self):
         return self.vector_db.as_retriever(
-            search_type="similarity", search_kwargs={"metric_type": "COSINE", "k": 10}
+            search_type="similarity", search_kwargs={"param": self.param, "k": 10}
         )
 
     def similarity_search(self, query, limit) -> List:
