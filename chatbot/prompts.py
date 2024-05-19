@@ -1,8 +1,6 @@
 from typing import AnyStr
 
-from langchain.prompts import (ChatPromptTemplate, MessagesPlaceholder,
-                               PromptTemplate)
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
 
 from chatbot.utils import SingletonMeta
 from configs.config import llm_config

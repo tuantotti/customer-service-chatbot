@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import AnyStr, List, Optional
+from typing import AnyStr, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -17,6 +17,8 @@ class QueryItem(BaseModel):
     question: AnyStr
     context: Optional[AnyStr] = Field(default="")
 
+class EmbeddingItem(BaseModel):
+    text: Union[AnyStr, List]
 
 class QuestionItem(BaseModel):
     question: AnyStr

@@ -22,6 +22,8 @@ sentence_transformers
 black
 isort==5.13.2
 fastapi==0.110.0
+nest_asyncio
+python-multipart
 uvicorn==0.28.1
 Scrapy
 bs4

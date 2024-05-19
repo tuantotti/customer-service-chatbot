@@ -4,8 +4,7 @@ from typing import Dict, Union
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.messages import get_buffer_string
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import (RunnableLambda, RunnableParallel,
-                                      RunnablePassthrough)
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from pyvi.ViTokenizer import tokenize
 
 from chatbot.embedd import EmbeddingModel
@@ -28,6 +27,14 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
         Args:
             use_retriever (bool, optional): this flag checks whether using retriever model. Defaults to False.
         """
+        self.output_parser = None
+        self.retriever = None
+        self.vector_store = None
+        self.embedding_model = None
+        self.llm = None
+        self.generator = None
+        self.CONDENSE_QUESTION_PROMPT = None
+        self.ANSWER_PROMPT = None
         self.use_retriever = use_retriever
         self.use_chat_history = use_chat_history
         self.memory = self.init_memory()
@@ -58,7 +65,7 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
         self.output_parser = StrOutputParser()
 
         if self.use_retriever and self.use_chat_history:
-            chain = self.get_conversional_chain()
+            chain = self.get_conversational_chain()
         elif self.use_retriever and not self.use_chat_history:
             chain = self.get_retrieval_chain()
         else:
@@ -75,7 +82,6 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
         Returns:
             Dict: the answer of incoming query
         """
-        answer = None
         answer = self.chain.invoke(query.model_dump())
 
         if not self.use_retriever or isinstance(answer, str):
@@ -96,14 +102,21 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
 
         return answer_item
 
-    def post_process_answer(self, answer):
-        hard_additional_answer = "Quý khách vui lòng để lại số điện thoại để đội ngũ chăm sóc khách hàng VNPT Money hỗ trợ."
+    @classmethod
+    def post_process_answer(cls, answer):
+        hard_additional_answer = (
+            "Quý khách vui lòng để lại số điện thoại để đội ngũ chăm sóc khách hàng VNPT Money "
+            "hỗ trợ."
+        )
         if answer["context"]:
             metadata = answer["context"][0].metadata
             metadata_json = metadata.get("metadata")
             if metadata_json:
                 url = metadata_json.get["url"]
-                hard_additional_answer = f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link sau: {url}"
+                hard_additional_answer = (
+                    f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link "
+                    f"sau: {url}"
+                )
                 hard_additional_answer = hard_additional_answer if url else ""
 
         if answer["answer"].endswith("."):
@@ -113,7 +126,8 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
 
         return answer
 
-    def init_memory(self):
+    @classmethod
+    def init_memory(cls):
         """init the memory cache
 
         Returns:
@@ -165,7 +179,8 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
 
         return reranked_docs
 
-    def reranking(self, question, docs):
+    @classmethod
+    def reranking(cls, question, docs):
         reranker = BM25RerankerImpl.from_documents(docs, k=1)
         reranked_docs = reranker.invoke(question)
 
@@ -178,7 +193,7 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
 
         return final_inputs
 
-    def get_conversional_chain(self):
+    def get_conversational_chain(self):
         history = RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
             | itemgetter("history"),
