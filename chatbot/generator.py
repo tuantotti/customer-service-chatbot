@@ -1,7 +1,9 @@
 from typing import Any, AnyStr, Dict, List
 
+from chatbot.utils import SingletonMeta
 
-class Generator:
+
+class Generator(metaclass=SingletonMeta):
     def __init__(self, model_params: Dict) -> None:
         """Initial a generator model
 

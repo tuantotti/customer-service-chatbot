@@ -1,17 +1,19 @@
 from operator import itemgetter
 from typing import Dict, Union
 
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.messages import get_buffer_string
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import (RunnableLambda, RunnableParallel,
                                       RunnablePassthrough)
+from pyvi.ViTokenizer import tokenize
 
 from chatbot.embedd import EmbeddingModel
 from chatbot.generator import Generator
 from chatbot.prompts import PredefinedPrompt
 from chatbot.reranker import BM25RerankerImpl
 from chatbot.retriever import VectorStore
+from chatbot.utils import SingletonMeta
 from configs.config import llm_config
 from rest_api.schemas.items import AnswerItem, QueryItem, QuestionItem
 from utils.logger import Logger
@@ -19,7 +21,7 @@ from utils.logger import Logger
 logger = Logger.get_logger()
 
 
-class CustomerServiceChatbot:
+class CustomerServiceChatbot(metaclass=SingletonMeta):
     def __init__(self, use_retriever=True, use_chat_history=False) -> None:
         """Initial params
 
@@ -28,9 +30,6 @@ class CustomerServiceChatbot:
         """
         self.use_retriever = use_retriever
         self.use_chat_history = use_chat_history
-        embedding_model = EmbeddingModel()
-        self.vector_store = VectorStore(embedding_model=embedding_model.model)
-        self.retriever = self.vector_store.get_retriever()
         self.memory = self.init_memory()
         self.chain = self.init_chain()
 
@@ -49,8 +48,12 @@ class CustomerServiceChatbot:
         self.ANSWER_PROMPT = prompt.ANSWER_PROMPT
         self.CONDENSE_QUESTION_PROMPT = prompt.CONDENSE_QUESTION_PROMPT
 
-        generator = Generator(model_params=llm_config["model_params"])
-        self.llm = generator.model
+        self.generator = Generator(model_params=llm_config["model_params"])
+        self.llm = self.generator.model
+
+        self.embedding_model = EmbeddingModel()
+        self.vector_store = VectorStore(embedding_model=self.embedding_model.model)
+        self.retriever = self.vector_store.get_retriever()
 
         self.output_parser = StrOutputParser()
 
@@ -94,8 +97,14 @@ class CustomerServiceChatbot:
         return answer_item
 
     def post_process_answer(self, answer):
-        url = answer["raw_context"][0].metadata["metadata"]["url"]
-        hard_additional_answer = f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link sau: {url}"
+        hard_additional_answer = "Quý khách vui lòng để lại số điện thoại để đội ngũ chăm sóc khách hàng VNPT Money hỗ trợ."
+        if answer["context"]:
+            metadata = answer["context"][0].metadata
+            metadata_json = metadata.get("metadata")
+            if metadata_json:
+                url = metadata_json.get["url"]
+                hard_additional_answer = f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link sau: {url}"
+                hard_additional_answer = hard_additional_answer if url else ""
 
         if answer["answer"].endswith("."):
             answer["answer"] += hard_additional_answer
@@ -110,8 +119,8 @@ class CustomerServiceChatbot:
         Returns:
             _type_: the memory object
         """
-        memory = ConversationBufferMemory(
-            return_messages=True, output_key="answer", input_key="question"
+        memory = ConversationBufferWindowMemory(
+            return_messages=True, output_key="answer", input_key="question", k=2
         )
 
         return memory
@@ -122,11 +131,10 @@ class CustomerServiceChatbot:
         return answer_chain
 
     def get_retrieval_chain(self):
-        logger.info("get_retrieval_chain")
         query = RunnablePassthrough.assign(question=lambda x: x["question"])
         retrieved_documents = {
             "question": itemgetter("question"),
-            "docs": itemgetter("question") | self.retriever,
+            "docs": itemgetter("question") | RunnableLambda(tokenize) | self.retriever,
         }
 
         final_inputs = {
@@ -139,7 +147,11 @@ class CustomerServiceChatbot:
             "docs": itemgetter("docs"),
             "raw_context": final_inputs["context"],
             "context": final_inputs["context"],
-            "answer": final_inputs | self.ANSWER_PROMPT | self.llm | StrOutputParser(),
+            "answer": final_inputs
+            | RunnableLambda(self.combine)
+            | self.ANSWER_PROMPT
+            | self.llm
+            | StrOutputParser(),
         }
 
         chain = query | retrieved_documents | output
@@ -147,12 +159,24 @@ class CustomerServiceChatbot:
         return chain
 
     def post_process_retrieval(self, question, docs):
-        reranked_docs = self.reranking(question, docs)
+        reranked_docs = []
+        if docs:
+            reranked_docs = self.reranking(question, docs)
+
         return reranked_docs
 
     def reranking(self, question, docs):
         reranker = BM25RerankerImpl.from_documents(docs, k=1)
-        return reranker.invoke(question)
+        reranked_docs = reranker.invoke(question)
+
+        return reranked_docs
+
+    def combine(self, final_inputs):
+        final_inputs["context"] = self.vector_store._combine_documents(
+            final_inputs["context"]
+        )
+
+        return final_inputs
 
     def get_conversional_chain(self):
         history = RunnablePassthrough.assign(

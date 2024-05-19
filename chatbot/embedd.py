@@ -2,10 +2,11 @@ from typing import AnyStr, List
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
+from chatbot.utils import SingletonMeta
 from configs.config import embedding_config
 
 
-class EmbeddingModel:
+class EmbeddingModel(metaclass=SingletonMeta):
     def __init__(self) -> None:
         """init embedding model"""
         self.model = self.get_embedding_model(embedding_config)

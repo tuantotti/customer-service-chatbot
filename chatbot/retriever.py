@@ -33,7 +33,13 @@ class VectorStore:
         return self.retriever_model.similarity_search(query, k=limit)
 
     def _combine_documents(self, docs, document_separator="\n\n"):
-        doc_strings = [
-            format_document(doc, self.DEFAULT_DOCUMENT_PROMPT) for doc in docs
-        ]
+        doc_strings = []
+        for doc in docs:
+            metadata = doc.metadata
+            metadata_json = metadata.get("metadata")
+            if metadata_json:
+                window_context = metadata_json.get("window_context")
+                doc_strings.append(window_context)
+            else:
+                doc_strings.append(format_document(doc, self.DEFAULT_DOCUMENT_PROMPT))
         return document_separator.join(doc_strings)

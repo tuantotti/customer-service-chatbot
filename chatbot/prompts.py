@@ -4,10 +4,11 @@ from langchain.prompts import (ChatPromptTemplate, MessagesPlaceholder,
                                PromptTemplate)
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
+from chatbot.utils import SingletonMeta
 from configs.config import llm_config
 
 
-class PredefinedPrompt:
+class PredefinedPrompt(metaclass=SingletonMeta):
     def __init__(self) -> None:
         """Initial params of prompt"""
         inference_params = llm_config["inference_params"]
