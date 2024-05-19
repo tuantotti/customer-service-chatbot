@@ -13,3 +13,4 @@ class PromotionDetailItem(scrapy.Item):
     date_range = scrapy.Field()
     content = scrapy.Field()
     url = scrapy.Field()
+    chunks = scrapy.Field()

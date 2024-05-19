@@ -63,8 +63,9 @@ ROBOTSTXT_OBEY = True
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    "crawler.pipelines.CleanDocumentPipeline": 299,
+    # "crawler.pipelines.CleanDocumentPipeline": 299,
     "crawler.pipelines.MongoPipeline": 300,
+    "crawler.pipelines.SyntheticDataPipeline": 301,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -92,7 +93,21 @@ ITEM_PIPELINES = {
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
+from datetime import datetime
+
+file_name = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
+FEEDS = {f"output/{file_name}.csv": {"format": "csv", "encoding": "utf-8"}}
 
 # Database settings
-MONGO_URI = "mongodb+srv://tuannv140301:VOHHcofMExtXBcXW@cluster0.qsugxut.mongodb.net/"
+MONGO_URI = "mongodb+srv://tuannv140301:D8T6ONE5Yxiqrvk6@cluster0.qsugxut.mongodb.net/"
 MONGO_DATABASE = "customer-service-chatbot"
+MILVUS_URI = "https://in03-7f0182a96e77a1f.api.gcp-us-west1.zillizcloud.com"
+MILVUS_COLLECTION = "Question_Answer"
+MILVUS_USER = "db_7f0182a96e77a1f"
+MILVUS_PASSWORD = "Op7]E[[hBZf9t9uB"
+LOG_FILE = f"logs/crawler/promotion_crawler/{file_name}.log"
+
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.abspath("../")))

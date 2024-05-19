@@ -1,12 +1,12 @@
 import re
 from functools import wraps
-from typing import Any
+from hashlib import sha256
+from typing import Any, AnyStr, List, Optional
 
 
 def check_spider_pipeline(process_item_method):
     @wraps(process_item_method)
     def wrapper(self, item, spider):
-
         # message template for debugging
         msg = "%%s %s pipeline step" % (self.__class__.__name__,)
         msg = f"{self.__class__.__name__} pipeline step"
@@ -68,3 +68,10 @@ class CleanText:
 
     def __call__(self, text, *args: Any, **kwds: Any) -> Any:
         return self.clean_text(text=text)
+
+
+def generate_id(title: AnyStr, date_range: AnyStr, url: AnyStr) -> AnyStr:
+    text = url if url else ""
+    text += title if title else ""
+    text += date_range if date_range else ""
+    return sha256(text.encode("utf-8")).hexdigest()
