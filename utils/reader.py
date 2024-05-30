@@ -7,7 +7,7 @@ from utils.logger import Logger
 logger = Logger.get_logger()
 
 
-def read_dataset(input_dir: AnyStr) -> Dict:
+def read_dataset(input_dir: AnyStr) -> pd.DataFrame:
     dataset = None
     try:
         if input_dir.endswith(".csv"):

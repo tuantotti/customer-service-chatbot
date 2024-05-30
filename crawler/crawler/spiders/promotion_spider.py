@@ -1,4 +1,3 @@
-import uuid
 from typing import Any, AnyStr, List, Optional
 
 from bs4 import BeautifulSoup
@@ -7,18 +6,19 @@ from scrapy.selector import Selector
 from tqdm import tqdm
 
 from crawler.items import PromotionDetailItem, PromotionItem
-from crawler.pipelines import MongoPipeline, SyntheticDataPipeline
-from crawler.utils import generate_id
+from crawler.pipelines import MongoPipeline, SyntheticDataPipeline, CleanDocumentPipeline
+from crawler.utils import generate_id, ChunkDocument
+import re
 
 
 class PromotionSpider(Spider):
     name = "promotion_crawler"
 
     def __init__(
-        self,
-        start_urls: Optional[str] = None,
-        name: Optional[str] = None,
-        **kwargs: Any,
+            self,
+            start_urls: Optional[str] = None,
+            name: Optional[str] = None,
+            **kwargs: Any,
     ):
         """Initial spider object
 
@@ -28,7 +28,8 @@ class PromotionSpider(Spider):
         super().__init__(name, **kwargs)
         self.start_urls = start_urls.split(",")
         self.logger.info(self.start_urls)
-        self.pipeline = {MongoPipeline, SyntheticDataPipeline}
+        self.pipeline = {CleanDocumentPipeline, MongoPipeline, SyntheticDataPipeline}
+        # self.pipeline = {CleanDocumentPipeline}
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -38,7 +39,6 @@ class PromotionSpider(Spider):
         return spider
 
     def spider_opened(self, spider):
-        # https://stackoverflow.com/questions/28169756
         request_size = len(self.crawler.engine.slot.scheduler)
         # if 1st run, initial request_size is 0. if resumed, it is remaining requests.
         self.max_request_size = request_size
@@ -71,7 +71,7 @@ class PromotionSpider(Spider):
             self.pbar.update()
             yield Request(url, callback=self.parse_detail, dont_filter=False)
 
-    def parse_detail(self, response):
+    def parse_detail(self, response, **kwargs):
         """Implement parse method to process the response of each request for each start_url
 
         Args:
@@ -90,8 +90,15 @@ class PromotionSpider(Spider):
         detail_item["date_range"] = date_range if date_range else ""
         content = self.extract_text(promotion_selector)
         detail_item["content"] = content
-        detail_item["chunks"] = self.extract_chunk(promotion_selector)
-        url = response.request.url
+
+        if self.check_pattern(content):
+            chunks = self.extract_chunk(promotion_selector)
+            chunks = chunks if chunks else [content]
+        else:
+            chunks = [content]
+
+        detail_item["chunks"] = chunks
+        url = response.url
         detail_item["url"] = url if url else ""
 
         detail_item["id"] = generate_id(title, date_range, None)
@@ -114,8 +121,8 @@ class PromotionSpider(Spider):
         for promotion_container in promotion_containers:
             promotion_container_html = promotion_container.get()
             soup = BeautifulSoup(promotion_container_html, "html.parser")
-            clean_text = soup.get_text(separator="\n", strip=True).strip()
-            result += clean_text + " "
+            clean_text = soup.get_text(separator="\n", strip=True)
+            result += clean_text + "\n"
 
         return result
 
@@ -136,7 +143,7 @@ class PromotionSpider(Spider):
         # Find all b tags
         b_tags = bs.find_all("b")
 
-        if len(b_tags) > 0:
+        if len(b_tags) > 4:
             for i in range(len(b_tags)):
                 if i < len(b_tags) - 1:
                     start = b_tags[i]
@@ -150,12 +157,45 @@ class PromotionSpider(Spider):
                 # traverse to all element between two tags
                 while start != end and start is not None:
                     if start:
-                        # content_txt += str(start).strip()
-                        content_txt += (
-                            start.getText(separator="\n", strip=True).strip() + "\n"
-                        )
+                        text = start.getText(separator="\n", strip=True).strip() + "\n"
+                        content_txt += text if text else ""
                         start = start.next_sibling
 
                 chunks.append(content_txt)
+        else:
+            chunks = [bs.get_text(separator="\n", strip=True)]
 
+        chunks = cls.filter_by_pattern(chunks)
         return chunks
+
+    @classmethod
+    def check_pattern(cls, text):
+        pattern = r'(\d+\..*?)(?=\n\d+\.|\Z)'
+        matches = re.findall(pattern, text, re.DOTALL)
+
+        return len(matches) > 4
+
+    @classmethod
+    def filter_by_pattern(cls, chunks: List) -> List:
+        result = []
+        temp = ""
+
+        for chunk in chunks:
+            if cls.check_pattern(chunk):
+                temp += chunk
+            else:
+                if temp:
+                    result.append(temp)
+                    temp = ""
+                result.append(chunk)
+
+        if temp:
+            result.append(temp)
+
+        return result
+    # @classmethod
+    # def extract_chunk(cls, content: AnyStr) -> List:
+    #     chunk_document = ChunkDocument(text=content, pattern=r'(\d+\..*?)(?=\n\d+\.|\Z)')
+    #     chunks = chunk_document(num_matches_threshold=4)
+    #
+    #     return chunks

@@ -6,12 +6,17 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import os
+from datetime import datetime
+
+import dotenv
+
+dotenv.load_dotenv()
 
 BOT_NAME = "crawler"
 
 SPIDER_MODULES = ["crawler.spiders"]
 NEWSPIDER_MODULE = "crawler.spiders"
-
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = "crawler (+http://www.yourdomain.com)"
@@ -63,7 +68,7 @@ ROBOTSTXT_OBEY = True
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    # "crawler.pipelines.CleanDocumentPipeline": 299,
+    "crawler.pipelines.CleanDocumentPipeline": 299,
     "crawler.pipelines.MongoPipeline": 300,
     "crawler.pipelines.SyntheticDataPipeline": 301,
 }
@@ -93,21 +98,21 @@ ITEM_PIPELINES = {
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
-from datetime import datetime
 
 file_name = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
-FEEDS = {f"output/{file_name}.csv": {"format": "csv", "encoding": "utf-8"}}
+FEEDS = {f"output/{file_name}.json": {"format": "json", "encoding": "utf-8"}}
 
 # Database settings
-MONGO_URI = "mongodb+srv://tuannv140301:D8T6ONE5Yxiqrvk6@cluster0.qsugxut.mongodb.net/"
-MONGO_DATABASE = "customer-service-chatbot"
-MILVUS_URI = "https://in03-7f0182a96e77a1f.api.gcp-us-west1.zillizcloud.com"
-MILVUS_COLLECTION = "Question_Answer"
-MILVUS_USER = "db_7f0182a96e77a1f"
-MILVUS_PASSWORD = "Op7]E[[hBZf9t9uB"
-LOG_FILE = f"logs/crawler/promotion_crawler/{file_name}.log"
+MONGO_URI = os.environ["MONGO_URI"]
+MONGO_DATABASE = os.environ["MONGO_DATABASE"]
+MILVUS_URI = os.environ["MILVUS_URI"]
+MILVUS_COLLECTION = os.environ["MILVUS_COLLECTION"]
+MILVUS_USER = os.environ["MILVUS_USER"]
+MILVUS_PASSWORD = os.environ["MILVUS_PASSWORD"]
+LLM_API = os.environ["LLM_API"]
+EMBEDDING_API = os.environ["EMBEDDING_API"]
 
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.abspath("../")))
+directory = "logs/crawler/promotion_crawler/"
+if not os.path.exists(directory):
+    os.makedirs(directory)
+LOG_FILE = f"{directory}/{file_name}.log"

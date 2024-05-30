@@ -17,8 +17,10 @@ class QueryItem(BaseModel):
     question: AnyStr
     context: Optional[AnyStr] = Field(default="")
 
+
 class EmbeddingItem(BaseModel):
     text: Union[AnyStr, List]
+
 
 class QuestionItem(BaseModel):
     question: AnyStr

@@ -112,7 +112,7 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
             metadata = answer["context"][0].metadata
             metadata_json = metadata.get("metadata")
             if metadata_json:
-                url = metadata_json.get["url"]
+                url = metadata_json["url"]
                 hard_additional_answer = (
                     f" Để biết thêm thông tin chi tiết, quý khách vui lòng truy cập đường link "
                     f"sau: {url}"

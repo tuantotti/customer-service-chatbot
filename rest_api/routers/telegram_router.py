@@ -20,7 +20,6 @@ async def set_webhook(webhook: WebhookItem):
 
 @router.post("/{}".format(TELEGRAM_TOKEN))
 async def response(request: Request, background_tasks: BackgroundTasks):
-    response = None
     json_request = await request.json()
     is_success = await telegram_service.respond(
         json_request, background_tasks=background_tasks

@@ -1,7 +1,7 @@
 import re
 from functools import wraps
 from hashlib import sha256
-from typing import Any, AnyStr, List, Optional
+from typing import Any, AnyStr, Dict, Optional
 
 
 def check_spider_pipeline(process_item_method):
@@ -58,7 +58,10 @@ class CleanText:
         return re.sub(self.emoji_pattern, " ", text)
 
     def remove_escape_character(self, text):
-        return re.sub(self.remove_escape_character_pattern, " ", text)
+        text = re.sub(r"([\r|\t|\xa0])+", " ", text)
+        text = re.sub(r"(\n)+", "\n", text)
+        text = re.sub(r"(\s)+", " ", text)
+        return text
 
     def clean_text(self, text):
         text = self.remove_emoji(text)
@@ -66,7 +69,7 @@ class CleanText:
 
         return text
 
-    def __call__(self, text, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, text, *args: Any, **kwargs: Any) -> Any:
         return self.clean_text(text=text)
 
 
@@ -75,3 +78,58 @@ def generate_id(title: AnyStr, date_range: AnyStr, url: AnyStr) -> AnyStr:
     text += title if title else ""
     text += date_range if date_range else ""
     return sha256(text.encode("utf-8")).hexdigest()
+
+
+def extract_question_answer(
+        data: AnyStr,
+        question_answer_pair_split: AnyStr = "************",
+        question_answer_split: AnyStr = "******",
+):
+    synthetic_data = []
+
+    list_question_answer = data.split(question_answer_pair_split)
+    for question_answer_pair in list_question_answer:
+        if question_answer_pair:
+            question_answer = question_answer_pair.split(question_answer_split)
+
+            try:
+                data = {}
+                if len(question_answer) == 2 or len(question_answer) == 3:
+                    question = question_answer[0].split(":", 1)[1]
+                    data["question"] = question.strip()
+                    answer = question_answer[1].split(":", 1)[1]
+                    data["answer"] = answer.strip()
+                if len(question_answer) == 3:
+                    context = question_answer[2].split(":", 1)[1]
+                    data["context"] = context.strip()
+
+                if data:
+                    synthetic_data.append(data)
+            except Exception as e:
+                print(e)
+                print(question_answer)
+
+    return synthetic_data
+
+
+class ChunkDocument:
+    def __init__(self, text: AnyStr, pattern: AnyStr = r'(\d+\..*?)(?=\n\d+\.|\Z)'):
+        self.text = text
+        self.pattern = pattern
+
+    def __call__(self, *args, **kwargs):
+        input_text = self.text
+        num_matches_threshold = kwargs.get("num_matches_threshold")
+        matches = re.findall(self.pattern, self.text, re.DOTALL)
+        if num_matches_threshold:
+            if len(matches) > num_matches_threshold:
+                chunks = [match.strip() for match in matches]
+            else:
+                chunks = [input_text]
+
+        else:
+            chunks = [match.strip() for match in matches]
+            if not chunks:
+                chunks = [input_text]
+
+        return chunks
