@@ -1,5 +1,17 @@
 # VNPT Customer Service Chatbot
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Deployment](#deployment)
+- [Feature](#feature)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+
+## Introduction
 This project focuses on developing a customer care chatbot for VNPT using the Retrieval-Augmented Generation (RAG) architecture. The chatbot aims to enhance customer support by providing accurate and timely responses to user queries.
 
 Key Features:
@@ -12,29 +24,20 @@ Key Features:
 The image below will outline the RAG architecture in this project which contains SimCSE, Vistral, BM-25 model for embedding, generating, and reranking, respectively
 ![All-Diagram-System Diagram drawio](https://github.com/tuantotti/customer-service-chatbot/assets/75234453/c9617b6a-5bfd-4140-9c8a-eac7293f00b5)
 
-## Table of Contents
-
-1. [Installation](#installation)
-2. [Usage](#usage)
-3. [Features](#features)
-4. [Contributing](#contributing)
-5. [License](#license)
-6. [Acknowledgements](#acknowledgements)
-
 ## Installation
 
-### [Docker][#docker]
-First, you need to setup docker from [official website]([URL](https://www.docker.com/))
+### Docker
 
+### Pip
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/project-name.git
+git clone https://github.com/vthgiang/LLMRAGChatbot.git
 
 # Navigate to the project directory
-cd project-name
+cd LLMRAGChatbot
 
 # Build project
-docker build .
+pip install -r requirements.txt
 ```
 #### If you want to run this project on CPU or GPU
 #### If you want to run this project on CPU:
@@ -49,3 +52,9 @@ CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python
 ```bash
 docker run -i -t vnpt-chatbot:latest /bin/bash
 ```
+## Features
+To re-fine tune Vistral Model see [kaggle link](https://www.kaggle.com/code/tuantotti/vistral-7b-fine-tuning)
+This link will fine tune with dataset [kaggle](https://www.kaggle.com/datasets/tuantotti/customer-service-dataset) 
+## Contributing
+## License
+## Acknowledgements
