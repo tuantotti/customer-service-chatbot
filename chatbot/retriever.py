@@ -37,9 +37,10 @@ class VectorStore:
         for doc in docs:
             metadata = doc.metadata
             metadata_json = metadata.get("metadata")
+            format_docs = format_document(doc, self.DEFAULT_DOCUMENT_PROMPT)
             if metadata_json:
                 window_context = metadata_json.get("window_context")
-                doc_strings.append(window_context)
+                doc_strings.append(window_context if window_context else format_docs)
             else:
-                doc_strings.append(format_document(doc, self.DEFAULT_DOCUMENT_PROMPT))
+                doc_strings.append(format_docs)
         return document_separator.join(doc_strings)

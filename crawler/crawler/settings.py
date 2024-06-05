@@ -70,7 +70,7 @@ ROBOTSTXT_OBEY = True
 ITEM_PIPELINES = {
     "crawler.pipelines.CleanDocumentPipeline": 299,
     "crawler.pipelines.MongoPipeline": 300,
-    "crawler.pipelines.SyntheticDataPipeline": 301,
+    # "crawler.pipelines.SyntheticDataPipeline": 301,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

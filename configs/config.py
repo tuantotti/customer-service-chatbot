@@ -2,15 +2,6 @@ import yaml
 from pydantic_settings import BaseSettings
 
 
-class Settings(BaseSettings):
-    MONGO_URI: str = "mongodb://localhost:27017"
-    MONGO_DATABASE: str = "legal-chatbot"
-    NUM_WORKER: int = 8
-
-    class Config:
-        env_file = ".env"
-
-
 class LlmConfig:
     def __init__(self) -> None:
         _config = yaml.safe_load(open("configs/llm_config.yaml", "r"))
@@ -50,7 +41,6 @@ class TelegramConfig:
 
 embedding_config = EmbeddingConfig().params
 llm_config = LlmConfig().model_params
-settings = Settings()
 milvus_config = MilvusConfig()
 mongo_config = MongoConfig()
 telegram_config = TelegramConfig().params

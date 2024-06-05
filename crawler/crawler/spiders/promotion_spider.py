@@ -1,8 +1,10 @@
 from typing import Any, AnyStr, List, Optional
-
+from pyvi.ViTokenizer import tokenize
 from bs4 import BeautifulSoup
 from scrapy import Request, Spider, signals
-from scrapy.selector import Selector
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.selector import Selector, SelectorList
 from tqdm import tqdm
 
 from crawler.items import PromotionDetailItem, PromotionItem
@@ -11,8 +13,14 @@ from crawler.utils import generate_id, ChunkDocument
 import re
 
 
-class PromotionSpider(Spider):
+class PromotionSpider(CrawlSpider):
     name = "promotion_crawler"
+    base_url = 'https://vnptpay.vn/web/'
+    start_urls = [base_url]
+
+    rules = (
+        Rule(LinkExtractor(allow=r"khuyenmai"), callback="parse_promotion_item", follow=True),
+    )
 
     def __init__(
             self,
@@ -26,10 +34,9 @@ class PromotionSpider(Spider):
             name (Optional[str], optional): name of spider. Defaults to None.
         """
         super().__init__(name, **kwargs)
-        self.start_urls = start_urls.split(",")
         self.logger.info(self.start_urls)
-        self.pipeline = {CleanDocumentPipeline, MongoPipeline, SyntheticDataPipeline}
-        # self.pipeline = {CleanDocumentPipeline}
+        # self.pipeline = {CleanDocumentPipeline, MongoPipeline, SyntheticDataPipeline}
+        self.pipeline = {}
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -52,7 +59,7 @@ class PromotionSpider(Spider):
         self.pbar.write("Closing {} spider".format(spider.name))
         self.pbar.close()  # close progress bar
 
-    def parse(self, response, **kwargs):
+    def parse_promotion_item(self, response, **kwargs):
         base_url = "https://vnptpay.vn/web/"
         promotion_selector = Selector(response).css("div#promotion div.items")
         self.pbar.total = len(promotion_selector)
@@ -88,12 +95,13 @@ class PromotionSpider(Spider):
         detail_item["title"] = title if title else ""
         date_range = promotion_selector.css("span::text").get()
         detail_item["date_range"] = date_range if date_range else ""
-        content = self.extract_text(promotion_selector)
+        content = self.extract_text(response)
         detail_item["content"] = content
 
         if self.check_pattern(content):
-            chunks = self.extract_chunk(promotion_selector)
-            chunks = chunks if chunks else [content]
+            chunks = self.separate_by_pattern(content)
+            if len(chunks) < 2:
+                chunks = [content]
         else:
             chunks = [content]
 
@@ -101,12 +109,12 @@ class PromotionSpider(Spider):
         url = response.url
         detail_item["url"] = url if url else ""
 
-        detail_item["id"] = generate_id(title, date_range, None)
+        detail_item["id"] = generate_id(title, date_range, "")
 
         return detail_item
 
     @classmethod
-    def extract_text(cls, selector: Selector) -> AnyStr:
+    def extract_text(cls, selector: SelectorList[Selector]) -> AnyStr:
         """Extract html to text
 
         Args:
@@ -165,15 +173,22 @@ class PromotionSpider(Spider):
         else:
             chunks = [bs.get_text(separator="\n", strip=True)]
 
+        chunks = list(filter(lambda chunk: chunk or str(chunk).strip(), chunks))
         chunks = cls.filter_by_pattern(chunks)
         return chunks
 
     @classmethod
     def check_pattern(cls, text):
+        matches = cls.separate_by_pattern(text)
+
+        return len(matches) >= 4
+
+    @classmethod
+    def separate_by_pattern(cls, text):
         pattern = r'(\d+\..*?)(?=\n\d+\.|\Z)'
         matches = re.findall(pattern, text, re.DOTALL)
 
-        return len(matches) > 4
+        return matches
 
     @classmethod
     def filter_by_pattern(cls, chunks: List) -> List:
@@ -181,7 +196,7 @@ class PromotionSpider(Spider):
         temp = ""
 
         for chunk in chunks:
-            if cls.check_pattern(chunk):
+            if not cls.check_pattern(chunk):
                 temp += chunk
             else:
                 if temp:
@@ -193,9 +208,3 @@ class PromotionSpider(Spider):
             result.append(temp)
 
         return result
-    # @classmethod
-    # def extract_chunk(cls, content: AnyStr) -> List:
-    #     chunk_document = ChunkDocument(text=content, pattern=r'(\d+\..*?)(?=\n\d+\.|\Z)')
-    #     chunks = chunk_document(num_matches_threshold=4)
-    #
-    #     return chunks

@@ -12,11 +12,11 @@ milvus:
   search_params:
     metric_type: COSINE
     params:
-        radius: 0.8 # threshold
+        radius: 0.5 # threshold
         range_filter : 1
 
 mongodb:
   connection_args:
-    uri: mongodb+srv://tuannv140301:9arqZL6UsMhhHsI0@cluster0.qsugxut.mongodb.net/
+    uri: mongodb+srv://tuannv140301:D8T6ONE5Yxiqrvk6@cluster0.qsugxut.mongodb.net/
   collection_args:
     database_name: customer-service-chatbot

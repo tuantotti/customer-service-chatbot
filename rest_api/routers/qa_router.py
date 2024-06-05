@@ -5,23 +5,26 @@ from fastapi import APIRouter
 from rest_api.schemas.items import EmbeddingItem, QueryItem, QuestionItem
 from rest_api.services.qa_service import (answer_question, embedd_service,
                                           generate)
+from utils.logger import Logger
 
 router = APIRouter(tags=["question_answering"])
+logger = Logger.get_logger()
 
 
 @router.post("/answer")
-async def answer_question_router(question: Union[QueryItem]) -> Dict:
+async def answer_question_router(question: QuestionItem) -> Dict:
     """API for answering incoming question
 
     Args:
-        question (Union[QueryItem]): incoming question
+        question (QuestionItem): incoming question
 
     Returns:
         Dict: the answer of incoming question
     """
     response = {}
+    logger.info(question)
     try:
-        answer = await answer_question(query=question)
+        answer = await answer_question(question=question)
         response["answer"] = answer
     except Exception as e:
         msg = f"Erorr {e}"

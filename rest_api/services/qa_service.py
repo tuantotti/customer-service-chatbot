@@ -6,20 +6,17 @@ from rest_api.schemas.items import AnswerItem, QueryItem, QuestionItem, Embeddin
 chatbot = CustomerServiceChatbot()
 
 
-async def answer_question(query: QueryItem) -> AnswerItem:
+async def answer_question(question: QuestionItem) -> AnswerItem:
     """Answer the incoming question
 
     Args:
-        query (QueryItem): incoming question
+        question (QuestionItem): incoming question
 
     Returns:
         Dict: the result of incoming question
     """
-    # get chat history
-    if isinstance(query, str):
-        query = QueryItem(question=query)
 
-    answer = chatbot.invoke(query=query)
+    answer = chatbot.invoke(query=question)
 
     return answer
 

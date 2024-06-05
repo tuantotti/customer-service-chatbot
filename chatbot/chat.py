@@ -1,11 +1,13 @@
 from operator import itemgetter
-from typing import Dict, Union
-
+from typing import Dict, Union, List
+from langchain_core.documents import Document
+import re
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.messages import get_buffer_string
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from pyvi.ViTokenizer import tokenize
+from chatbot.utils import filter_old_docs
 
 from chatbot.embedd import EmbeddingModel
 from chatbot.generator import Generator
@@ -92,12 +94,12 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
         logger.info(answer)
         answer = self.post_process_answer(answer)
         answer_item = AnswerItem(
-            question=answer["question"],
-            context=answer["context"],
-            raw_context=answer["raw_context"],
-            docs=answer["docs"],
-            answer=answer["answer"],
-            is_continue=answer["is_continue"],
+            question=answer.get("question", ""),
+            context=answer.get("context", []),
+            raw_context=answer.get("raw_context", []),
+            docs=answer.get("docs", []),
+            answer=answer.get("answer", ""),
+            is_continue=answer.get("is_continue", False),
         )
 
         return answer_item
@@ -108,6 +110,7 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
             "Quý khách vui lòng để lại số điện thoại để đội ngũ chăm sóc khách hàng VNPT Money "
             "hỗ trợ."
         )
+        answer['answer'] = answer['answer'].strip()
         if answer["context"]:
             metadata = answer["context"][0].metadata
             metadata_json = metadata.get("metadata")
@@ -119,8 +122,10 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
                 )
                 hard_additional_answer = hard_additional_answer if url else ""
 
+        link_pattern = r'(https?://[^\s]+)'
+        links = re.findall(link_pattern, answer['answer'])
         if answer["answer"].endswith("."):
-            answer["answer"] += hard_additional_answer
+            answer["answer"] = answer['answer'] + hard_additional_answer if len(links) < 1 else answer['answer']
         else:
             answer["is_continue"] = True
 
@@ -162,10 +167,10 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
             "raw_context": final_inputs["context"],
             "context": final_inputs["context"],
             "answer": final_inputs
-            | RunnableLambda(self.combine)
-            | self.ANSWER_PROMPT
-            | self.llm
-            | StrOutputParser(),
+                      | RunnableLambda(self.combine)
+                      | self.ANSWER_PROMPT
+                      | self.llm
+                      | StrOutputParser(),
         }
 
         chain = query | retrieved_documents | output
@@ -176,12 +181,13 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
         reranked_docs = []
         if docs:
             reranked_docs = self.reranking(question, docs)
-
+        if reranked_docs:
+            reranked_docs = filter_old_docs(reranked_docs)
         return reranked_docs
 
     @classmethod
-    def reranking(cls, question, docs):
-        reranker = BM25RerankerImpl.from_documents(docs, k=1)
+    def reranking(cls, question, docs) -> List[Document]:
+        reranker = BM25RerankerImpl.from_documents(docs, k=4)
         reranked_docs = reranker.invoke(question)
 
         return reranked_docs
@@ -196,26 +202,26 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
     def get_conversational_chain(self):
         history = RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
-            | itemgetter("history"),
+                         | itemgetter("history"),
         )
 
         standalone_question = {
             "standalone_question": {
-                "question": lambda x: x["question"],
-                "chat_history": lambda x: (
-                    ""
-                    if self.use_chat_history
-                    else get_buffer_string(x["chat_history"])
-                ),
-            }
-            | self.CONDENSE_QUESTION_PROMPT
-            | self.llm,
+                                       "question": lambda x: x["question"],
+                                       "chat_history": lambda x: (
+                                           ""
+                                           if self.use_chat_history
+                                           else get_buffer_string(x["chat_history"])
+                                       ),
+                                   }
+                                   | self.CONDENSE_QUESTION_PROMPT
+                                   | self.llm,
         }
 
         retrieved_documents = {
             "docs": itemgetter("standalone_question")
-            | self.retriever
-            | self.vector_store._combine_documents,
+                    | self.retriever
+                    | self.vector_store._combine_documents,
             "question": lambda x: x["standalone_question"],
         }
 
