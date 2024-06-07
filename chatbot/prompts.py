@@ -1,12 +1,55 @@
-from typing import AnyStr
+from abc import ABC, abstractmethod
+from typing import AnyStr, List
 
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 
-from chatbot.utils import SingletonMeta
 from configs.config import llm_config
 
 
-class PredefinedPrompt(metaclass=SingletonMeta):
+class BasePrompt(ABC):
+    @staticmethod
+    def apply_chat_template(conversations: List) -> AnyStr:
+        raise NotImplementedError("apply_chat_template is not implemented")
+
+
+class MistralPrompt(BasePrompt):
+    @staticmethod
+    def apply_chat_template(conversations: List) -> AnyStr:
+        bos_token = "<s>"
+        eos_token = "</s>"
+        if conversations[0]["role"] == "system":
+            loop_messages = conversations[1:]
+            system_message = conversations[0]["content"]
+        else:
+            loop_messages = conversations
+            system_message = False
+
+        result = []
+
+        for index, message in enumerate(loop_messages):
+            if (message["role"] == "user") != (index % 2 == 0):
+                raise Exception(
+                    "Conversation roles must alternate user/assistant/user/assistant/..."
+                )
+
+            if index == 0 and system_message:
+                content = (
+                    f'<<SYS>> \n{system_message}\n<</SYS>> \n\n{message["content"]}'
+                )
+            else:
+                content = message["content"]
+
+            if message["role"] == "user":
+                formatted_message = f"{bos_token}[INST]  {content.strip()} [/INST]"
+            elif message["role"] == "assistant":
+                formatted_message = f"  {content.strip()} {eos_token}"
+
+            result.append(formatted_message)
+
+        return "".join(result)
+
+
+class PredefinedPrompt:
     def __init__(self) -> None:
         """Initial params of prompt"""
         inference_params = llm_config["inference_params"]

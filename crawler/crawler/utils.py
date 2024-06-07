@@ -1,7 +1,9 @@
 import re
 from functools import wraps
 from hashlib import sha256
-from typing import Any, AnyStr, Dict, Optional
+from typing import Any, AnyStr, Dict, List, Optional
+
+from crawler.settings import GEMINI_API
 
 
 def check_spider_pipeline(process_item_method):
@@ -81,9 +83,9 @@ def generate_id(title: AnyStr, date_range: AnyStr, url: AnyStr) -> AnyStr:
 
 
 def extract_question_answer(
-        data: AnyStr,
-        question_answer_pair_split: AnyStr = "************",
-        question_answer_split: AnyStr = "******",
+    data: AnyStr,
+    question_answer_pair_split: AnyStr = "************",
+    question_answer_split: AnyStr = "******",
 ):
     synthetic_data = []
 
@@ -113,7 +115,7 @@ def extract_question_answer(
 
 
 class ChunkDocument:
-    def __init__(self, text: AnyStr, pattern: AnyStr = r'(\d+\..*?)(?=\n\d+\.|\Z)'):
+    def __init__(self, text: AnyStr, pattern: AnyStr = r"(\d+\..*?)(?=\n\d+\.|\Z)"):
         self.text = text
         self.pattern = pattern
 
@@ -133,3 +135,63 @@ class ChunkDocument:
                 chunks = [input_text]
 
         return chunks
+
+
+LLM_TYPE = {"gemini": "gemini-pro"}
+
+
+class LLMAPI:
+    def __init__(self, API_KEY: AnyStr, type: AnyStr) -> None:
+        self.API_KEY = API_KEY
+        self.type = type
+
+        if self.type == "gemini":
+            try:
+                import google.generativeai as genai
+
+                genai.configure(api_key=self.API_KEY)
+                self.model = genai.GenerativeModel("gemini-pro")
+            except ImportError as e:
+                raise e
+
+    def invoke(self, text: AnyStr) -> List[AnyStr]:
+        response = self.model.generate_content(
+            text,
+        )
+
+        return response
+
+
+def llm_chunking(text: AnyStr) -> List[AnyStr]:
+    prompt = """
+Công việc của bạn là tách đoạn văn thành các phần ngắn hơn nhưng vẫn phải đảm bảo ngữ nghĩa trong một phần. Nếu bạn không chia được thành đừng phần hãy trả về đoạn văn ban đầu.
+Các phần cần ngăn cách nhau bởi chuỗi "*********"
+Để tôi cho bạn xem một ví dụ:
+Đoạn văn:
+Hoàn 20% nộp phí chung cư qua VNPT Money
+24/04/2024 - 31/07/2024
+1.    Thời gian triển khai:
+24/4/2024 – 31/7/2024
+2.    Phạm vi:
+Toàn quốc.
+3.    Đối tượng:
+Khách hàng có tài khoản VNPT Money (có tài khoản Ví VNPT Pay định danh, liên kết ngân hàng hoặc có tài khoản Mobile Money định danh theo quy định).
+
+Các đoạn được tách:
+*********
+Hoàn 20% nộp phí chung cư qua VNPT Money 24/04/2024 - 31/07/2024
+*********
+1.    Thời gian triển khai: 24/4/2024 – 31/7/2024
+*********
+2.    Phạm vi: Toàn quốc.
+*********
+3.    Đối tượng: Khách hàng có tài khoản VNPT Money (có tài khoản Ví VNPT Pay định danh, liên kết ngân hàng hoặc có tài khoản Mobile Money định danh theo quy định)
+*********
+
+Hãy chia đoạn văn dưới đây thành các phần. Lưu ý không thêm bất kỳ ký tự nào khi bạn chia thành các phần:
+Đoạn văn:
+{text}
+Các đoạn được tách:
+"""
+    llm = LLMAPI(API_KEY=GEMINI_API, type="gemini")
+    return llm.invoke(prompt.format(text=text))

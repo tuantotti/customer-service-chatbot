@@ -69,7 +69,7 @@ ROBOTSTXT_OBEY = True
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     "crawler.pipelines.CleanDocumentPipeline": 299,
-    "crawler.pipelines.MongoPipeline": 300,
+    # "crawler.pipelines.MongoPipeline": 300,
     # "crawler.pipelines.SyntheticDataPipeline": 301,
 }
 
@@ -111,6 +111,7 @@ MILVUS_USER = os.environ["MILVUS_USER"]
 MILVUS_PASSWORD = os.environ["MILVUS_PASSWORD"]
 LLM_API = os.environ["LLM_API"]
 EMBEDDING_API = os.environ["EMBEDDING_API"]
+GEMINI_API = os.environ["GEMINI_API"]
 
 directory = "logs/crawler/promotion_crawler/"
 if not os.path.exists(directory):

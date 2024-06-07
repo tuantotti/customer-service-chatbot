@@ -1,7 +1,8 @@
 from typing import AnyStr, List, Union
 
 from chatbot.chat import CustomerServiceChatbot
-from rest_api.schemas.items import AnswerItem, QueryItem, QuestionItem, EmbeddingItem
+from rest_api.schemas.items import (AnswerItem, EmbeddingItem, QueryItem,
+                                    QuestionItem)
 
 chatbot = CustomerServiceChatbot()
 
