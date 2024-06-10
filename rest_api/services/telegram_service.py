@@ -17,7 +17,6 @@ TELEGRAM_TOKEN = telegram_config["bot_token"]
 bot = telegram.Bot(token=telegram_config["bot_token"])
 mongo_client = MongoClient(host=mongo_config.URI)
 customer_db = mongo_client[mongo_config.DATABASE_NAME]
-telegram_chat_collection = customer_db["telegram_chat"]
 
 
 async def set_webhook(webhook: WebhookItem):
@@ -32,6 +31,7 @@ async def set_webhook(webhook: WebhookItem):
 
 async def respond(request: Dict, background_tasks: BackgroundTasks):
     is_success = False
+    telegram_chat_collection = customer_db["telegram_chat"]
     update = telegram.Update.de_json(request, bot)
     logger.info(update)
 
@@ -44,9 +44,8 @@ async def respond(request: Dict, background_tasks: BackgroundTasks):
     try:
         question = QueryItem(question=text)
         # AI service to generate response
-        response = await answer_question(query=question)
-        ai_answer = response["answer"]
-        logger.info(f"AI: {ai_answer}")
+        ai_answer = await answer_question(query=question)
+        ai_answer = ai_answer.answer
         # send message to user
         message = await bot.sendMessage(
             chat_id=chat_id, text=ai_answer, reply_to_message_id=msg_id
@@ -60,7 +59,6 @@ async def respond(request: Dict, background_tasks: BackgroundTasks):
 
         # Save question from user and answer from AI (background tasks) with chat id
         chat = telegram_chat_collection.find_one({"id": str(chat_id)})
-        # logger.info(chat)
         if chat:
             message_items = chat["messages"]
             message_items.append(user_message.model_dump())

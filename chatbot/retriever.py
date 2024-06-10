@@ -3,7 +3,8 @@ from typing import List
 from langchain.prompts.prompt import PromptTemplate
 from langchain_community.vectorstores import Milvus
 from langchain_core.prompts import format_document
-
+from datetime import datetime
+import re
 from configs.config import milvus_config
 
 
@@ -32,15 +33,45 @@ class VectorStore:
     def similarity_search(self, query, limit) -> List:
         return self.retriever_model.similarity_search(query, k=limit)
 
-    def _combine_documents(self, docs, document_separator="\n\n"):
-        doc_strings = []
+    def extract_date(self, doc) -> str:
+        date_str = ""
+        date_pattern = r"[0-9]+/[0-9]+/[0-9]+"
+        metadata = doc.metadata
+        metadata_json = metadata.get("metadata")
+        if metadata_json:
+          date_range = doc["date_range"]
+          date_str = re.findall(date_pattern, date_range) if date_range else ""
+
+        return date_str
+    def check_old_doc(self, doc1, doc2):
+        doc1_date_str = self.extract_date(doc1)
+        doc2_date_str = self.extract_date(doc2)
+
+        
+    def remove_old_docs(self, docs):
+        unique_docs = {}
         for doc in docs:
             metadata = doc.metadata
             metadata_json = metadata.get("metadata")
-            format_docs = format_document(doc, self.DEFAULT_DOCUMENT_PROMPT)
+            if metadata_json:
+              id = metadata_json.get('id')
+              if id:
+                current_doc = unique_docs[id]
+                if self.check_old_doc(current_doc, doc):
+                  unique_docs[id] = doc
+
+        return unique_docs.values()
+
+    def _combine_documents(self, docs, document_separator="\n\n"):
+        doc_strings = []
+        docs = self.remove_old_docs(docs)
+        for doc in docs:
+            metadata = doc.metadata
+            metadata_json = metadata.get("metadata")
             if metadata_json:
                 window_context = metadata_json.get("window_context")
-                doc_strings.append(window_context if window_context else format_docs)
+                text = window_context if window_context else format_document(doc, self.DEFAULT_DOCUMENT_PROMPT)
+                doc_strings.append(text)
             else:
-                doc_strings.append(format_docs)
+                doc_strings.append(format_document(doc, self.DEFAULT_DOCUMENT_PROMPT))
         return document_separator.join(doc_strings)

@@ -17,6 +17,6 @@ milvus:
 
 mongodb:
   connection_args:
-    uri: mongodb+srv://tuannv140301:D8T6ONE5Yxiqrvk6@cluster0.qsugxut.mongodb.net/
+    uri: mongodb+srv://tuannv140301:YBeon3EzsjgrMSca@cluster0.qsugxut.mongodb.net/
   collection_args:
     database_name: customer-service-chatbot
