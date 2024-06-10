@@ -25,7 +25,7 @@ async def answer_question_router(question: QuestionItem) -> Dict:
     logger.info(question)
     try:
         answer = await answer_question(question=question)
-        response["answer"] = answer
+        response["answer"] = answer.answer
     except Exception as e:
         msg = f"Erorr {e}"
         response["message"] = msg

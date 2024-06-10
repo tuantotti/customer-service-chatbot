@@ -1,32 +1,38 @@
+import re
 from typing import Any, AnyStr, List, Optional
-from pyvi.ViTokenizer import tokenize
+
 from bs4 import BeautifulSoup
+from pyvi.ViTokenizer import tokenize
 from scrapy import Request, Spider, signals
 from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import Selector, SelectorList
+from scrapy.spiders import CrawlSpider, Rule
 from tqdm import tqdm
 
 from crawler.items import PromotionDetailItem, PromotionItem
-from crawler.pipelines import MongoPipeline, SyntheticDataPipeline, CleanDocumentPipeline
-from crawler.utils import generate_id, ChunkDocument
-import re
+from crawler.pipelines import (CleanDocumentPipeline, MongoPipeline,
+                               SyntheticDataPipeline)
+from crawler.utils import ChunkDocument, generate_id, llm_chunking
 
 
 class PromotionSpider(CrawlSpider):
     name = "promotion_crawler"
-    base_url = 'https://vnptpay.vn/web/'
+    base_url = "https://vnptpay.vn/web/"
     start_urls = [base_url]
 
     rules = (
-        Rule(LinkExtractor(allow=r"khuyenmai"), callback="parse_promotion_item", follow=True),
+        Rule(
+            LinkExtractor(allow=r"khuyenmai"),
+            callback="parse_promotion_item",
+            follow=True,
+        ),
     )
 
     def __init__(
-            self,
-            start_urls: Optional[str] = None,
-            name: Optional[str] = None,
-            **kwargs: Any,
+        self,
+        start_urls: Optional[str] = None,
+        name: Optional[str] = None,
+        **kwargs: Any,
     ):
         """Initial spider object
 
@@ -103,7 +109,9 @@ class PromotionSpider(CrawlSpider):
             if len(chunks) < 2:
                 chunks = [content]
         else:
-            chunks = [content]
+            # self.log("LLM Chunking")
+            # chunks = llm_chunking(content)
+            chunks[content]
 
         detail_item["chunks"] = chunks
         url = response.url
@@ -185,7 +193,7 @@ class PromotionSpider(CrawlSpider):
 
     @classmethod
     def separate_by_pattern(cls, text):
-        pattern = r'(\d+\..*?)(?=\n\d+\.|\Z)'
+        pattern = r"(\d+\..*?)(?=\n\d+\.|\Z)"
         matches = re.findall(pattern, text, re.DOTALL)
 
         return matches

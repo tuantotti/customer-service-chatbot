@@ -2,6 +2,7 @@ FROM python:3.10-slim
 
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
     libxml2-dev \
     libxslt1-dev \
     libffi-dev \

@@ -1,12 +1,16 @@
 from typing import AnyStr, List
+
 import aiohttp
 import pymongo
 from itemadapter import ItemAdapter
 from pymilvus import Collection, connections
 from pyvi.ViTokenizer import tokenize
 from scrapy.exceptions import DropItem
+
 from crawler.utils import (CleanText, check_spider_pipeline,
                            extract_question_answer, generate_id)
+
+
 class CleanDocumentPipeline:
     def __init__(self, clean_text: CleanText):
         self.clean_text = clean_text

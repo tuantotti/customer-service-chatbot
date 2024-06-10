@@ -1,6 +1,6 @@
-from typing import Any, AnyStr, Dict, List
-from datetime import datetime
 import re
+from datetime import datetime
+from typing import Any, AnyStr, Dict, List
 
 
 class SingletonMeta(type):
@@ -15,11 +15,11 @@ class SingletonMeta(type):
 
 
 def generate_question_answer(
-        llm,
-        prompt,
-        data: Dict,
-        question_answer_pair_split: AnyStr = "************",
-        question_answer_split: AnyStr = "******",
+    llm,
+    prompt,
+    data: Dict,
+    question_answer_pair_split: AnyStr = "************",
+    question_answer_split: AnyStr = "******",
 ):
     synthetic_chain = llm | prompt
     response = synthetic_chain.invoke(data)
@@ -53,7 +53,9 @@ def generate_question_answer(
 def extract_date_from_str(date_str: AnyStr) -> List[datetime]:
     date_pattern = r"[0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4}"
     date_range_list = re.findall(date_pattern, date_str)
-    date_range_list = [datetime.strptime(date, '%d/%m/%Y') for date in date_range_list if date]
+    date_range_list = [
+        datetime.strptime(date, "%d/%m/%Y") for date in date_range_list if date
+    ]
     return date_range_list
 
 
@@ -67,8 +69,8 @@ def is_older(docs_1, docs_2):
     Returns:
         True if docs_1 is older than docs_2 else False
     """
-    date_range1 = docs_1.metadata['metadata']['date_range']
-    date_range2 = docs_2.metadata['metadata']['date_range']
+    date_range1 = docs_1.metadata["metadata"]["date_range"]
+    date_range2 = docs_2.metadata["metadata"]["date_range"]
     date_list_1 = extract_date_from_str(date_range1)
     date_list_2 = extract_date_from_str(date_range2)
 
