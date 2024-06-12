@@ -66,12 +66,19 @@ class VectorStore:
         doc_strings = []
         docs = self.remove_old_docs(docs)
         for doc in docs:
+            template = "Tên chương trình {title}\nThời gian triển khai{date_range}\nĐường dẫn đến sản phẩm {url}\n{content}"
             metadata = doc.metadata
             metadata_json = metadata.get("metadata")
+            chunk = format_document(doc, self.DEFAULT_DOCUMENT_PROMPT)
             if metadata_json:
                 window_context = metadata_json.get("window_context")
-                text = window_context if window_context else format_document(doc, self.DEFAULT_DOCUMENT_PROMPT)
-                doc_strings.append(text)
-            else:
-                doc_strings.append(format_document(doc, self.DEFAULT_DOCUMENT_PROMPT))
+                chunk = window_context if window_context else chunk
+                url = metadata_json["url"]
+                title = metadata_json["title"]
+                date_range = metadata_json["date_range"]
+
+                format_doc = template.format(
+                    url=url, title=title, date_range=date_range, content=chunk
+                )
+                doc_strings.append(format_doc)
         return document_separator.join(doc_strings)

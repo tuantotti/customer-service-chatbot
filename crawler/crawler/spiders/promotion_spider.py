@@ -41,8 +41,7 @@ class PromotionSpider(CrawlSpider):
         """
         super().__init__(name, **kwargs)
         self.logger.info(self.start_urls)
-        # self.pipeline = {CleanDocumentPipeline, MongoPipeline, SyntheticDataPipeline}
-        self.pipeline = {}
+        self.pipeline = {CleanDocumentPipeline, MongoPipeline, SyntheticDataPipeline}
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):

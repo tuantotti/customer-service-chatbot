@@ -1,12 +1,31 @@
+import logging as logger
+import os
 import re
+import sys
 from functools import wraps
 from hashlib import sha256
-from typing import Any, AnyStr, Dict, List, Optional
+from typing import Any, AnyStr, Dict, List, Optional, Union
 
-from crawler.settings import GEMINI_API
+import yaml
+
+from crawler.settings import CHUNKING_PROMPT, GEMINI_API
+
+# import this near the top of the page
+sys.path.append(os.path.join(os.path.abspath("../")))
+from chatbot.embedd import EmbeddingModel
+from configs.config import embedding_config
 
 
 def check_spider_pipeline(process_item_method):
+    """Decorator for checking pipeline scrapy
+
+    Args:
+        process_item_method (function): a function to check
+
+    Returns:
+        _type_: function to check pipeline scrapy is applied or not
+    """
+
     @wraps(process_item_method)
     def wrapper(self, item, spider):
         # message template for debugging
@@ -29,6 +48,8 @@ def check_spider_pipeline(process_item_method):
 
 
 class CleanText:
+    """Clean text"""
+
     def __init__(self) -> None:
         self.emoji_pattern = re.compile(
             "["
@@ -76,6 +97,16 @@ class CleanText:
 
 
 def generate_id(title: AnyStr, date_range: AnyStr, url: AnyStr) -> AnyStr:
+    """Generate id by using hash function of title, date_range, and url
+
+    Args:
+        title (AnyStr): Title of promotion
+        date_range (AnyStr): promotion time
+        url (AnyStr): url of promotion
+
+    Returns:
+        AnyStr: id of the promotion
+    """
     text = url if url else ""
     text += title if title else ""
     text += date_range if date_range else ""
@@ -114,7 +145,31 @@ def extract_question_answer(
     return synthetic_data
 
 
+def extract_question(data: AnyStr, question_split: AnyStr = "******") -> List:
+    """Extract questions from generated response
+
+    Args:
+        data (AnyStr): response from llm
+        question_split (AnyStr, optional): split string. Defaults to "******".
+
+    Returns:
+        List: list of questions
+    """
+    data = data.split(question_split)
+    result = []
+
+    for d in data:
+        if d:
+            question = d.strip().split(":", 1) if question else ""
+            if question:
+                result.append(question)
+
+    return result
+
+
 class ChunkDocument:
+    """Chunk document by using LLM"""
+
     def __init__(self, text: AnyStr, pattern: AnyStr = r"(\d+\..*?)(?=\n\d+\.|\Z)"):
         self.text = text
         self.pattern = pattern
@@ -141,7 +196,9 @@ LLM_TYPE = {"gemini": "gemini-pro"}
 
 
 class LLMAPI:
-    def __init__(self, API_KEY: AnyStr, type: AnyStr) -> None:
+    """function to call LLM API"""
+
+    def __init__(self, API_KEY: AnyStr = GEMINI_API, type: AnyStr = "gemini") -> None:
         self.API_KEY = API_KEY
         self.type = type
 
@@ -150,9 +207,16 @@ class LLMAPI:
                 import google.generativeai as genai
 
                 genai.configure(api_key=self.API_KEY)
-                self.model = genai.GenerativeModel("gemini-pro")
+                self.model = genai.GenerativeModel(LLM_TYPE[self.type])
             except ImportError as e:
                 raise e
+
+    async def ainvoke(self, text: AnyStr) -> List[AnyStr]:
+        response = self.model.generate_content(
+            text,
+        )
+
+        return response
 
     def invoke(self, text: AnyStr) -> List[AnyStr]:
         response = self.model.generate_content(
@@ -163,35 +227,34 @@ class LLMAPI:
 
 
 def llm_chunking(text: AnyStr) -> List[AnyStr]:
-    prompt = """
-Công việc của bạn là tách đoạn văn thành các phần ngắn hơn nhưng vẫn phải đảm bảo ngữ nghĩa trong một phần. Nếu bạn không chia được thành đừng phần hãy trả về đoạn văn ban đầu.
-Các phần cần ngăn cách nhau bởi chuỗi "*********"
-Để tôi cho bạn xem một ví dụ:
-Đoạn văn:
-Hoàn 20% nộp phí chung cư qua VNPT Money
-24/04/2024 - 31/07/2024
-1.    Thời gian triển khai:
-24/4/2024 – 31/7/2024
-2.    Phạm vi:
-Toàn quốc.
-3.    Đối tượng:
-Khách hàng có tài khoản VNPT Money (có tài khoản Ví VNPT Pay định danh, liên kết ngân hàng hoặc có tài khoản Mobile Money định danh theo quy định).
-
-Các đoạn được tách:
-*********
-Hoàn 20% nộp phí chung cư qua VNPT Money 24/04/2024 - 31/07/2024
-*********
-1.    Thời gian triển khai: 24/4/2024 – 31/7/2024
-*********
-2.    Phạm vi: Toàn quốc.
-*********
-3.    Đối tượng: Khách hàng có tài khoản VNPT Money (có tài khoản Ví VNPT Pay định danh, liên kết ngân hàng hoặc có tài khoản Mobile Money định danh theo quy định)
-*********
-
-Hãy chia đoạn văn dưới đây thành các phần. Lưu ý không thêm bất kỳ ký tự nào khi bạn chia thành các phần:
-Đoạn văn:
-{text}
-Các đoạn được tách:
-"""
     llm = LLMAPI(API_KEY=GEMINI_API, type="gemini")
-    return llm.invoke(prompt.format(text=text))
+    return llm.invoke(CHUNKING_PROMPT.format(text=text))
+
+
+embedding_model = EmbeddingModel(params=embedding_config)
+
+
+def embedd(text: Union[AnyStr, List]) -> List:
+    """convert text to vector
+
+    Args:
+        text (Union[AnyStr, List]): incoming text
+
+    Returns:
+        List: list of float represented as vector if input is a string else return list of list float represented as a list of vector
+    """
+    vectors = []
+    if isinstance(text, "str"):
+        try:
+            vectors = embedding_model.embed_query(text)
+        except Exception as e:
+            vectors = []
+            logger.error(e)
+    else:
+        try:
+            vectors = embedding_model.embed_documents(text)
+        except Exception as e:
+            vectors = []
+            logger.error(e)
+
+    return vectors

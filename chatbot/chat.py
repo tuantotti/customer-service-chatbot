@@ -15,7 +15,7 @@ from chatbot.prompts import PredefinedPrompt
 from chatbot.reranker import BM25RerankerImpl
 from chatbot.retriever import VectorStore
 from chatbot.utils import SingletonMeta, filter_old_docs
-from configs.config import llm_config
+from configs.config import embedding_config, llm_config
 from rest_api.schemas.items import AnswerItem, QueryItem, QuestionItem
 from utils.logger import Logger
 
@@ -60,7 +60,7 @@ class CustomerServiceChatbot(metaclass=SingletonMeta):
         self.generator = Generator(model_params=llm_config["model_params"])
         self.llm = self.generator.model
 
-        self.embedding_model = EmbeddingModel()
+        self.embedding_model = EmbeddingModel(params=embedding_config)
         self.vector_store = VectorStore(embedding_model=self.embedding_model.model)
         self.retriever = self.vector_store.get_retriever()
 

@@ -3,13 +3,12 @@ from typing import AnyStr, List
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
 from chatbot.utils import SingletonMeta
-from configs.config import embedding_config
 
 
 class EmbeddingModel(metaclass=SingletonMeta):
-    def __init__(self) -> None:
+    def __init__(self, params) -> None:
         """init embedding model"""
-        self.model = self.get_embedding_model(embedding_config)
+        self.model = self.get_embedding_model(params=params)
 
     def get_embedding_model(self, params):
         """Get embedding model

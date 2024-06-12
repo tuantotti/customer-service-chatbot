@@ -4,13 +4,21 @@ from pydantic_settings import BaseSettings
 
 class LlmConfig:
     def __init__(self) -> None:
-        _config = yaml.safe_load(open("configs/llm_config.yaml", "r"))
+        try:
+            _config = yaml.safe_load(open("configs/llm_config.yaml", "r"))
+        except Exception as e:
+            _config = yaml.safe_load(open("../configs/llm_config.yaml", "r"))
+
         self.model_params = _config["model"]
 
 
 class MilvusConfig:
     def __init__(self) -> None:
-        _config = yaml.safe_load(open("configs/database.yaml", "r"))
+        try:
+            _config = yaml.safe_load(open("configs/database.yaml", "r"))
+        except Exception as e:
+            _config = yaml.safe_load(open("../configs/database.yaml", "r"))
+
         milvus_params = _config["milvus"]
         self.connection_args = milvus_params["connection_args"]
         self.collection_args = milvus_params["collection_args"]
@@ -19,7 +27,11 @@ class MilvusConfig:
 
 class MongoConfig:
     def __init__(self) -> None:
-        _config = yaml.safe_load(open("configs/database.yaml", "r"))
+        try:
+            _config = yaml.safe_load(open("configs/database.yaml", "r"))
+        except Exception as e:
+            _config = yaml.safe_load(open("../configs/database.yaml", "r"))
+
         mongo_params = _config["mongodb"]
         connection_args = mongo_params["connection_args"]
         collection_args = mongo_params["collection_args"]
@@ -29,13 +41,21 @@ class MongoConfig:
 
 class EmbeddingConfig:
     def __init__(self) -> None:
-        _config = yaml.safe_load(open("configs/embedding_config.yaml", "r"))
+        try:
+            _config = yaml.safe_load(open("configs/embedding_config.yaml", "r"))
+        except Exception as e:
+            _config = yaml.safe_load(open("../configs/embedding_config.yaml", "r"))
+
         self.params = _config["model"]
 
 
 class TelegramConfig:
     def __init__(self) -> None:
-        _config = yaml.safe_load(open("configs/telegram.yaml"))
+        try:
+            _config = yaml.safe_load(open("configs/telegram.yaml"))
+        except Exception as e:
+            _config = yaml.safe_load(open("../configs/telegram.yaml"))
+
         self.params = _config["telegram"]
 
 
