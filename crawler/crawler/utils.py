@@ -160,9 +160,14 @@ def extract_question(data: AnyStr, question_split: AnyStr = "******") -> List:
 
     for d in data:
         if d:
-            question = d.strip().split(":", 1) if question else ""
+            question = ""
+            try:
+                question = d.strip().split(":", 1)[1]
+            except Exception as e:
+                logger.error(f"extract_question: have no question to extract {e}")
+
             if question:
-                result.append(question)
+                result.append(str(question.strip()))
 
     return result
 
@@ -211,19 +216,37 @@ class LLMAPI:
             except ImportError as e:
                 raise e
 
-    async def ainvoke(self, text: AnyStr) -> List[AnyStr]:
+    async def ainvoke(self, text: AnyStr) -> AnyStr:
         response = self.model.generate_content(
             text,
         )
 
-        return response
+        if not response.text:
+            for i in range(3):
+                response = self.model.generate_content(
+                    text,
+                )
 
-    def invoke(self, text: AnyStr) -> List[AnyStr]:
+                if response.text:
+                    break
+
+        return response.text
+
+    def invoke(self, text: AnyStr) -> AnyStr:
         response = self.model.generate_content(
             text,
         )
 
-        return response
+        if not response.text:
+            for i in range(3):
+                response = self.model.generate_content(
+                    text,
+                )
+
+                if response.text:
+                    break
+
+        return response.text
 
 
 def llm_chunking(text: AnyStr) -> List[AnyStr]:
@@ -244,7 +267,7 @@ def embedd(text: Union[AnyStr, List]) -> List:
         List: list of float represented as vector if input is a string else return list of list float represented as a list of vector
     """
     vectors = []
-    if isinstance(text, "str"):
+    if isinstance(text, str):
         try:
             vectors = embedding_model.embed_query(text)
         except Exception as e:

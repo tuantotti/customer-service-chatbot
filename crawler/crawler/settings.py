@@ -69,7 +69,7 @@ ROBOTSTXT_OBEY = True
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     "crawler.pipelines.CleanDocumentPipeline": 299,
-    "crawler.pipelines.MongoPipeline": 300,
+    "crawler.pipelines.CheckDuplicatedPipeline": 300,
     "crawler.pipelines.SyntheticDataPipeline": 301,
 }
 
@@ -109,8 +109,8 @@ MILVUS_URI = os.environ["MILVUS_URI"]
 MILVUS_COLLECTION = os.environ["MILVUS_COLLECTION"]
 MILVUS_USER = os.environ["MILVUS_USER"]
 MILVUS_PASSWORD = os.environ["MILVUS_PASSWORD"]
-LLM_API = os.environ["LLM_API"]
-EMBEDDING_API = os.environ["EMBEDDING_API"]
+# LLM_API = os.environ["LLM_API"]
+# EMBEDDING_API = os.environ["EMBEDDING_API"]
 GEMINI_API = os.environ["GEMINI_API"]
 
 directory = "logs/crawler/promotion_crawler/"
@@ -150,7 +150,7 @@ Hãy chia đoạn văn dưới đây thành các phần. Lưu ý không thêm b�
 Các đoạn được tách:
 """
 
-SYNTHETIC_PROMPT = """Bạn là chuyên gia về chăm sóc khác hàng. Công việc của bạn là tạo ra dữ liệu câu hỏi thực tế của khách hàng bằng tiếng Việt về chương trình khuyến mãi sản phẩm. Giọng điệu trong câu trả lời của nhân viên chăm sóc khác hàng phải trang trọng, ấm áp và lịch sự. Mỗi cặp câu hỏi, câu trả lời phải ngăn cách nhau bởi chuỗi "************"; giữa câu hỏi và câu trả lời ngăn cách bởi chuỗi "******".20 câu hỏi được tạo ra phải chứa tên chương trình khuyến mãi, không sử dụng tên thay thế nào khác. Các câu trả lời được tạo ra cần chèn LINK KHUYẾN MÃI nếu bạn thấy hợp lý.
+SYNTHETIC_PROMPT = """Bạn là chuyên gia về chăm sóc khác hàng. Công việc của bạn là tạo ra dữ liệu câu hỏi thực tế của khách hàng bằng tiếng Việt về chương trình khuyến mãi sản phẩm. Giọng điệu trong câu trả lời của nhân viên chăm sóc khác hàng phải trang trọng, ấm áp và lịch sự. Mỗi cặp câu hỏi, câu trả lời phải ngăn cách nhau bởi chuỗi "************"; giữa câu hỏi và câu trả lời ngăn cách bởi chuỗi "******".20 câu hỏi được tạo ra phải chứa TÊN CHƯƠNG TRÌNH KHUYẾN MÃI, không sử dụng tên thay thế nào khác. Các câu trả lời được tạo ra cần chèn LINK KHUYẾN MÃI nếu bạn thấy hợp lý.
 Dưới đây là một ví dụ về 4 câu hỏi dựa trên chương trình khuyến mãi:
 CHƯƠNG TRÌNH KHUYẾN MÃI
 TÊN CHƯƠNG TRÌNH KHUYẾN MÃI: Tiết kiệm 20.000đ thanh toán Điện, Nước qua VNPT Money
@@ -173,11 +173,11 @@ Khách hàng: Đối tượng nào được tham gia chương trình khuyến m�
 Khách hàng: Cần có điều kiện gì để tham gia chương trình khuyến mãi Tiết kiệm 20.000đ thanh toán Điện, Nước qua VNPT Money?
 ************
 
-Dựa vào ví dụ mà tôi đã cung cấp, hãy tạo ra 20 câu hỏi với cấu trúc giống với ví dụ dựa trên thông tin CHƯƠNG TRÌNH KHUYẾN MÃI dưới đây: 
+Dựa vào ví dụ mà tôi đã cung cấp, hãy tạo ra 5 câu hỏi với cấu trúc giống với ví dụ dựa trên thông tin CHƯƠNG TRÌNH KHUYẾN MÃI dưới đây: 
 CHƯƠNG TRÌNH KHUYẾN MÃI
 TÊN CHƯƠNG TRÌNH KHUYẾN MÃI: {title}
 LINK KHUYẾN MÃI: {link} 
 THÔNG TIN KHUYẾN MÃI: "{content}" 
 
-20 câu hỏi:
+5 câu hỏi:
 """

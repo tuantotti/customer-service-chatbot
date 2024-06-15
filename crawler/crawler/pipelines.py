@@ -1,4 +1,4 @@
-from typing import AnyStr, List
+from typing import AnyStr, List, Dict
 
 import aiohttp
 import pymongo
@@ -29,13 +29,13 @@ class CleanDocumentPipeline:
         return item
 
 
-class MongoPipeline:
-    collection_name = "crawled-data"
+class CheckDuplicatedPipeline:
 
     def __init__(self, mongo_uri, mongo_db):
         self.new_items = None
         self.db = None
         self.client = None
+        self.collection_name = "crawled_data"
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
 
@@ -43,7 +43,7 @@ class MongoPipeline:
     def from_crawler(cls, crawler):
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI"),
-            mongo_db=crawler.settings.get("MONGO_DATABASE", "items"),
+            mongo_db=crawler.settings.get("MONGO_DATABASE", ""),
         )
 
     def open_spider(self, spider):
@@ -52,11 +52,6 @@ class MongoPipeline:
         self.new_items = {}
 
     def close_spider(self, spider):
-        spider.logger.info(f"Saved {len(self.new_items.keys())} new items")
-        if self.new_items:
-            self.db[self.collection_name].insert_many(
-                [item for item in self.new_items.values()]
-            )
         self.client.close()
 
     @check_spider_pipeline
@@ -98,13 +93,17 @@ class SyntheticDataPipeline:
         milvus_uri,
         milvus_user,
         milvus_pwd,
-        milvus_collection,
+        milvus_collection_name,
+        mongo_uri,
+        mongo_db,
     ):
         self.db = None
         self.milvus_uri = milvus_uri
         self.milvus_user = milvus_user
         self.milvus_pwd = milvus_pwd
-        self.milvus_collection = milvus_collection
+        self.milvus_collection_name = milvus_collection_name
+        self.mongo_uri = mongo_uri
+        self.mongo_db = mongo_db
         self.llm = llm
 
     @classmethod
@@ -115,7 +114,9 @@ class SyntheticDataPipeline:
             milvus_uri=crawler.settings.get("MILVUS_URI"),
             milvus_user=crawler.settings.get("MILVUS_USER"),
             milvus_pwd=crawler.settings.get("MILVUS_PASSWORD"),
-            milvus_collection=crawler.settings.get("MILVUS_COLLECTION"),
+            milvus_collection_name=crawler.settings.get("MILVUS_COLLECTION"),
+            mongo_uri=crawler.settings.get("MONGO_URI"),
+            mongo_db=crawler.settings.get("MONGO_DATABASE", ""),
         )
 
     def open_spider(self, spider):
@@ -125,7 +126,10 @@ class SyntheticDataPipeline:
             user=self.milvus_user,
             password=self.milvus_pwd,
         )
-        self.colection = Collection(self.milvus_collection)
+        self.milvus_collection = Collection(self.milvus_collection_name)
+        self.client = pymongo.MongoClient(self.mongo_uri)
+        self.mongo_db = self.client[self.mongo_db]
+        self.mongo_collection = self.mongo_db["crawled_data"]
 
     def close_spider(self, spider):
         connections.disconnect("default")
@@ -135,61 +139,65 @@ class SyntheticDataPipeline:
         title = item.get("title", "")
         url = item.get("url", "")
         chunks = item.get("chunks", default=[])
-        if chunks:
-            synthetic_data = []
-            for chunk in chunks:
-                prompt_str = SYNTHETIC_PROMPT.format(
-                    title=title, link=url, content=chunk
-                )
+        promotion_id = item.get("id", default="")
 
-                # Generate questions
-                question_answer_raw = await self.llm.ainvoke(prompt_str)
-                # Convert to list of question
-                question_answer_pairs = extract_question(question_answer_raw["content"])
+        if not chunks:
+            raise DropItem(f"This item with id {promotion_id} do not have chunks")
 
-                tokenize_questions = [
-                    tokenize(item["question"]) for item in question_answer_pairs
-                ]
-                # convert questions to vectors
-                question_vectors = embedd(tokenize_questions)
+        synthetic_data = []
+        for chunk in chunks:
+            prompt_str = SYNTHETIC_PROMPT.format(
+                title=title, link=url, content=str(chunk)
+            )
 
-                data = [
-                    {
-                        "text": question_answer["question"],
-                        "vector": question_vector,
-                        "metadata": {
-                            "answer": question_answer["answer"],
-                            "context": chunk,
-                            "mongo_id": item.get("id"),
-                        },
-                    }
-                    for question_answer, question_vector in zip(
-                        question_answer_pairs, question_vectors["vectors"]
-                    )
-                ]
+            # Generate questions
+            synthetic_question = self.llm.invoke(prompt_str)
 
-                synthetic_data.extend(data)
+            # Convert to list of question
+            questions = extract_question(synthetic_question)
 
-            try:
-                self.save(synthetic_data)
-                spider.logger.info(
-                    f"Generate question answer pairs for item with id {item.get('id')}"
-                )
-            except Exception as e:
-                spider.logger.warning(e)
-                raise DropItem(
-                    f"Can not save question answer embedding for item with id {item.get('id')}"
-                )
+            tokenize_questions = [tokenize(str(question)) for question in questions]
+            # convert questions to vectors
+            question_vectors = embedd(tokenize_questions)
 
-            return item
-        else:
-            raise DropItem(f"This item with id {item.get('id')} do not have chunks")
+            data = [
+                {
+                    "text": chunk,
+                    "vector": question_vector,
+                    "metadata": {
+                        # "answer": question_answer["answer"],
+                        "question": question,
+                        "context": chunk,
+                        "promotion_id": promotion_id,
+                    },
+                }
+                for question, question_vector in zip(questions, question_vectors)
+            ]
 
-    def save(self, data: List):
+            synthetic_data.extend(data)
+
+        try:
+            self.save_milvus(synthetic_data)
+            self.save_mongo(ItemAdapter(item).asdict())
+            spider.logger.info(f"Save embedding and text for item with id {promotion_id}")
+        except Exception as e:
+            spider.logger.error(f"{e}")
+            raise DropItem(f"Can not save embedding for item with id {promotion_id}")
+
+        return item
+
+    def save_milvus(self, data: List):
         ids = []
-        if data:
-            try:
-                ids = self.colection.insert(data=data)
-            except Exception as e:
-                raise e
-        return ids
+        try:
+            ids = self.milvus_collection.insert(data=data)
+            return ids
+        except Exception as e:
+            raise e
+
+    def save_mongo(self, data: Dict):
+        try:
+            ids = self.mongo_collection.insert_one(data)
+
+            return ids
+        except Exception as e:
+            raise e

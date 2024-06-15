@@ -10,13 +10,13 @@ from scrapy.spiders import CrawlSpider, Rule
 from tqdm import tqdm
 
 from crawler.items import PromotionDetailItem, PromotionItem
-from crawler.pipelines import (CleanDocumentPipeline, MongoPipeline,
+from crawler.pipelines import (CheckDuplicatedPipeline, CleanDocumentPipeline,
                                SyntheticDataPipeline)
 from crawler.utils import ChunkDocument, generate_id, llm_chunking
 
 
 class PromotionSpider(CrawlSpider):
-    name = "promotion_crawler"
+    name = "promotion_spider"
     base_url = "https://vnptpay.vn/web/"
     start_urls = [base_url]
 
@@ -41,7 +41,11 @@ class PromotionSpider(CrawlSpider):
         """
         super().__init__(name, **kwargs)
         self.logger.info(self.start_urls)
-        self.pipeline = {CleanDocumentPipeline, MongoPipeline, SyntheticDataPipeline}
+        self.pipeline = {
+            CleanDocumentPipeline,
+            CheckDuplicatedPipeline,
+            SyntheticDataPipeline,
+        }
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -103,6 +107,7 @@ class PromotionSpider(CrawlSpider):
         content = self.extract_text(response)
         detail_item["content"] = content
 
+        chunks = []
         if self.check_pattern(content):
             chunks = self.separate_by_pattern(content)
             if len(chunks) < 2:
@@ -110,7 +115,7 @@ class PromotionSpider(CrawlSpider):
         else:
             # self.log("LLM Chunking")
             # chunks = llm_chunking(content)
-            chunks[content]
+            chunks = [content]
 
         detail_item["chunks"] = chunks
         url = response.url
